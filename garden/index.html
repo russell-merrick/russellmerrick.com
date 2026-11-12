@@ -1,0 +1,602 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0b0d12">
+<title>Russell Merrick — Sand Garden</title>
+<meta name="description" content="A tilt-and-rake zen sand garden in your browser. Music, Nandland, and projects inside.">
+<meta name="author" content="Russell Merrick">
+<link rel="canonical" href="https://russellmerrick.com/garden/">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Russell Merrick">
+<meta property="og:title" content="Russell Merrick — Sand Garden">
+<meta property="og:description" content="Rake the sand. Tilt your phone and watch it pour.">
+<meta property="og:url" content="https://russellmerrick.com/garden/">
+<meta property="og:image" content="https://russellmerrick.com/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+@font-face{font-family:"IBM Plex Sans";font-weight:500;font-display:swap;src:url(../fonts/ibm-plex-sans-500.woff2) format("woff2")}
+@font-face{font-family:"IBM Plex Mono";font-weight:400;font-display:swap;src:url(../fonts/ibm-plex-mono-400.woff2) format("woff2")}
+:root{--bg:#0b0d12;--elev:#14161c;--border:#2a2f3a;--text:#e8eaef;--dim:#9aa1b3;--accent:#e8a23a;--glow:rgba(232,162,58,.35)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:"IBM Plex Sans",system-ui,sans-serif;overflow:hidden;overscroll-behavior:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+#sand{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
+#hud{position:fixed;top:0;left:0;right:0;padding:max(12px,env(safe-area-inset-top)) 16px 22px;display:flex;justify-content:space-between;align-items:center;gap:8px;white-space:nowrap;font:400 11px/1.4 "IBM Plex Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);pointer-events:none;background:linear-gradient(180deg,rgba(11,13,18,.72),rgba(11,13,18,0))}
+#hud b{color:var(--accent);font-weight:400}
+#hud .right{display:flex;gap:8px;align-items:center;pointer-events:auto}
+.chip{background:rgba(11,13,18,.35);border:1px solid var(--border);color:var(--dim);font:inherit;letter-spacing:inherit;text-transform:inherit;padding:4px 8px;border-radius:6px;text-decoration:none;cursor:pointer;line-height:1.4}
+.chip:hover,.chip:focus-visible{color:var(--text);border-color:#3a4150;outline:none}
+.chip.accent{color:var(--accent);border-color:rgba(232,162,58,.5)}
+.chip.accent:hover,.chip.accent:focus-visible{background:var(--accent);color:#1a1308}
+.chip[aria-pressed="false"]{opacity:.55;text-decoration:line-through}
+/* experience switcher: add future experiences as more <a> entries */
+.exps{display:flex;border:1px solid var(--border);border-radius:6px;overflow:hidden;background:rgba(11,13,18,.35)}
+.exps a{color:var(--dim);text-decoration:none;padding:4px 8px;line-height:1.4}
+.exps a+a{border-left:1px solid var(--border)}
+.exps a:hover,.exps a:focus-visible{color:var(--text);outline:none}
+.exps a[aria-current="page"]{color:#1a1308;background:var(--accent)}
+#bar{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:space-between;align-items:flex-end;gap:10px;padding:26px max(16px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));font:400 11px/1.5 "IBM Plex Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);pointer-events:none;background:linear-gradient(0deg,rgba(11,13,18,.6),rgba(11,13,18,0))}
+#bar .tools{display:flex;gap:8px;pointer-events:auto}
+#note{max-width:64ch}
+@media (max-width:560px){#hud .long,#readout{display:none}#bar{flex-direction:column;align-items:stretch}#note{font-size:9.5px;letter-spacing:.08em;text-align:center;max-width:none}#bar .tools{justify-content:center}}
+@media (min-width:561px){#hud .short{display:none}#note{white-space:nowrap}}
+#start{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:radial-gradient(ellipse 60% 45% at 50% 45%,rgba(11,13,18,.82),rgba(11,13,18,.45) 70%,rgba(11,13,18,.2));z-index:5;text-align:center;padding:24px}
+#start h1{margin:0;font-weight:500;font-size:clamp(30px,7vw,52px);letter-spacing:-.01em;text-shadow:0 2px 30px rgba(0,0,0,.6)}
+#start p{margin:0;color:#c5cad6;font:400 12px/1.7 "IBM Plex Mono",monospace;letter-spacing:.12em;text-transform:uppercase;max-width:36ch;text-shadow:0 1px 12px rgba(0,0,0,.8)}
+#go{appearance:none;border:0;border-radius:999px;background:var(--accent);color:#1a1308;font:500 16px "IBM Plex Sans",sans-serif;padding:16px 34px;box-shadow:0 0 40px -6px var(--glow);cursor:pointer}
+#skip{color:var(--dim);font:400 11px "IBM Plex Mono",monospace;letter-spacing:.14em;text-transform:uppercase;text-decoration:none;border-bottom:1px solid var(--border);padding-bottom:2px}
+#skip:hover{color:var(--accent)}
+#start .alt{color:var(--dim);font:400 11px "IBM Plex Mono",monospace;letter-spacing:.14em;text-transform:uppercase}
+#start .alt a{color:var(--dim);text-decoration:none;border-bottom:1px solid var(--border)}
+@media (max-width:420px){.exps a{padding:4px 6px;letter-spacing:.06em}#hud .right{gap:6px}}
+</style>
+</head>
+<body>
+<canvas id="sand" aria-label="Sand garden. Drag to rake, tilt to pour."></canvas>
+<div id="hud"><span><span class="long">RUSSELL MERRICK / </span><b class="long">SAND GARDEN</b></span><span id="readout">LEVEL</span>
+  <span class="right">
+    <nav class="exps" aria-label="Experiences"><a href="../">BASS</a><a href="./" aria-current="page">GARDEN</a><a href="../dream/">DREAM</a><a href="../nebula/">NEBULA</a></nav>
+    <button id="recenter" class="chip" title="Make the current angle level"><span class="long">RECENTER</span><span class="short">⟲</span></button>
+    <a class="chip accent" href="../about/"><span class="long">ENTER SITE →</span><span class="short">SITE →</span></a>
+  </span></div>
+<div id="bar">
+  <span id="note">DRAG = RAKE · TAP = RIPPLE · TILT = POUR · SHAKE = SMOOTH</span>
+  <span class="tools">
+    <button id="sound" class="chip" aria-pressed="true" title="Ambient sound on/off">SOUND</button>
+    <button id="smooth" class="chip" title="Smooth the sand flat">SMOOTH</button>
+    <button id="rerake" class="chip accent" title="Rake the pattern back in">RE-RAKE</button>
+  </span>
+</div>
+<div id="start">
+  <h1>Sand Garden</h1>
+  <p>Drag to rake. Tap for a ripple. Tilt your phone to let the sand pour. Sound is soft and optional.</p>
+  <button id="go">Tap to start</button>
+  <p id="msg" style="text-transform:none;letter-spacing:.04em"></p>
+  <a id="skip" href="../about/">Skip to site →</a>
+  <span class="alt">or try the <a href="../">tilt bass</a> · <a href="../dream/">dream</a> · <a href="../nebula/">nebula</a></span>
+</div>
+<script>
+"use strict";
+// ================= config =================
+const TARGET_CELLS = 90000;   // sim resolution budget (heightfield cells)
+const MIN_CELL = 2;           // CSS px per cell, minimum
+const BASE = 6, AMP = 1.0;    // sand depth and groove depth (height units)
+const SPACING = 5.5;          // groove period in cells (rake tine spacing)
+const TINES = 5;
+const TALUS = 1.5;            // max stable height step between neighbours at rest (angle of repose)
+const TILT_K = 5.2;           // how strongly tilt adds to the downhill step
+const FLOW_RATE = 0.22, SUBSTEPS = 2;
+const DEAD = 3, FULL = 35;    // tilt deadzone / full-scale in degrees
+const DPR_CAP = 2;
+const D2R = Math.PI / 180, R2D = 180 / Math.PI, TAU = Math.PI * 2;
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const smoothstep = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+// ================= canvas + grid =================
+const cv = document.getElementById("sand"), g = cv.getContext("2d", { alpha: false });
+const off = document.createElement("canvas"), og = off.getContext("2d");          // sim-res shaded sand
+const stoneLayer = document.createElement("canvas"), sg = stoneLayer.getContext("2d"); // stones, drawn once per resize
+let cssW = 0, cssH = 0, dpr = 1, GW = 0, GH = 0, N = 0, sx = 1, sy = 1;
+let h, target, solid, floorCol, grain, img, px32, stones = [], portrait = false;
+
+function buildGrid() {
+  cssW = innerWidth; cssH = innerHeight; portrait = cssH > cssW;
+  const cs = Math.max(MIN_CELL, Math.sqrt(cssW * cssH / TARGET_CELLS));
+  GW = Math.round(cssW / cs); GH = Math.round(cssH / cs); N = GW * GH;
+  h = new Float32Array(N); target = new Float32Array(N); solid = new Uint8Array(N);
+  floorCol = new Uint32Array(N); grain = new Int8Array(N);
+  off.width = GW; off.height = GH; img = og.createImageData(GW, GH); px32 = new Uint32Array(img.data.buffer);
+  makeStones(); makePattern(); h.set(target);
+  const r = rng(7);
+  for (let i = 0; i < N; i++) grain[i] = (r() * 9 - 4.5) | 0;
+  // hidden floor revealed when sand pours away: deep navy with a faint amber grid
+  for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) {
+    const gl = (x % 12 === 0 || y % 12 === 0) ? 1 : 0;
+    const R = gl ? 92 : 16, G = gl ? 62 : 19, B = gl ? 36 : 32;
+    floorCol[y * GW + x] = 0xff000000 | (B << 16) | (G << 8) | R;
+  }
+  sizeCanvas();
+}
+function sizeCanvas() {
+  dpr = Math.min(DPR_CAP, devicePixelRatio || 1);
+  cssW = innerWidth; cssH = innerHeight;
+  cv.width = Math.round(cssW * dpr); cv.height = Math.round(cssH * dpr);
+  sx = cssW / GW; sy = cssH / GH;
+  drawStoneLayer(); dirty = true;
+}
+let rebuildT = 0;
+addEventListener("resize", () => {
+  clearTimeout(rebuildT);
+  rebuildT = setTimeout(() => {
+    // small changes (mobile URL bar) just stretch; orientation flips or big changes rebuild the garden
+    const flip = (innerHeight > innerWidth) !== portrait;
+    const big = Math.abs(innerWidth / cssW - 1) > 0.15 || Math.abs(innerHeight / cssH - 1) > 0.15;
+    if (flip || big) buildGrid(); else sizeCanvas();
+  }, 120);
+});
+
+// ================= stones =================
+function makeStones() {
+  const L = portrait
+    ? [[0.33, 0.34, 0.12, 0.5, 1.30, 0.82], [0.53, 0.27, 0.055, 1.3, 1.15, 0.9], [0.66, 0.65, 0.10, -0.3, 1.35, 0.8], [0.45, 0.74, 0.045, 0.9, 1.1, 0.95]]
+    : [[0.26, 0.56, 0.095, 0.3, 1.35, 0.8], [0.355, 0.43, 0.048, 1.1, 1.2, 0.9], [0.68, 0.37, 0.08, -0.4, 1.3, 0.82], [0.755, 0.47, 0.036, 0.8, 1.1, 0.95], [0.555, 0.76, 0.042, 2.0, 1.25, 0.85]];
+  const r = rng(42), m = Math.min(GW, GH);
+  stones = L.map(([fx, fy, fr, rot, ex, ey]) => ({ cx: fx * GW, cy: fy * GH, r: fr * m, rot, ex, ey, p1: r() * TAU, p2: r() * TAU, p3: r() * TAU }));
+  solid.fill(0);
+  for (const s of stones) {
+    const R = s.r * Math.max(s.ex, s.ey) * 1.3 + 2;
+    for (let y = Math.max(0, (s.cy - R) | 0); y < Math.min(GH, s.cy + R); y++)
+      for (let x = Math.max(0, (s.cx - R) | 0); x < Math.min(GW, s.cx + R); x++)
+        if (stoneDist(s, x + 0.5, y + 0.5) < 0) solid[y * GW + x] = 1;
+  }
+}
+function stoneRad(s, a) { return s.r * (1 + 0.10 * Math.sin(3 * a + s.p1) + 0.06 * Math.sin(5 * a + s.p2) + 0.03 * Math.sin(7 * a + s.p3)); }
+function stoneDist(s, x, y) { // approximate signed distance in cells
+  const dx = x - s.cx, dy = y - s.cy, c = Math.cos(s.rot), sn = Math.sin(s.rot);
+  const lx = (dx * c + dy * sn) / s.ex, ly = (-dx * sn + dy * c) / s.ey;
+  return (Math.hypot(lx, ly) - stoneRad(s, Math.atan2(ly, lx))) * (s.ex + s.ey) * 0.5;
+}
+function stonePath(ctx, s, k) {
+  const c = Math.cos(s.rot), sn = Math.sin(s.rot);
+  ctx.beginPath();
+  for (let i = 0; i <= 72; i++) {
+    const a = i / 72 * TAU, R = stoneRad(s, a) + 0.35, lx = Math.cos(a) * R * s.ex, ly = Math.sin(a) * R * s.ey;
+    const X = (s.cx + lx * c - ly * sn) * sx * k, Y = (s.cy + lx * sn + ly * c) * sy * k;
+    i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y);
+  }
+  ctx.closePath();
+}
+function drawStoneLayer() {
+  stoneLayer.width = cv.width; stoneLayer.height = cv.height;
+  const k = dpr; sg.clearRect(0, 0, stoneLayer.width, stoneLayer.height);
+  const r = rng(99);
+  for (const s of stones) {
+    const pr = s.r * Math.max(sx, sy) * k;          // stone radius in device px
+    const cx = s.cx * sx * k, cy = s.cy * sy * k;
+    // long soft shadow away from the low sun (upper left)
+    sg.save(); sg.shadowColor = "rgba(3,5,12,.75)"; sg.shadowBlur = pr * 0.35; sg.shadowOffsetX = pr * 0.22; sg.shadowOffsetY = pr * 0.26;
+    stonePath(sg, s, k); sg.fillStyle = "#1a1c26"; sg.fill(); sg.restore();
+    // body: cool slate, lit from upper-left
+    stonePath(sg, s, k);
+    const body = sg.createRadialGradient(cx - pr * 0.45, cy - pr * 0.5, pr * 0.05, cx, cy, pr * 1.45);
+    body.addColorStop(0, "#7d7a80"); body.addColorStop(0.35, "#4a4b57"); body.addColorStop(0.75, "#272a37"); body.addColorStop(1, "#151722");
+    sg.fillStyle = body; sg.fill();
+    // speckle texture, clipped
+    sg.save(); stonePath(sg, s, k); sg.clip();
+    for (let i = 0; i < pr * 3; i++) {
+      const a = r() * TAU, d = Math.sqrt(r()) * pr * 1.4, x = cx + Math.cos(a) * d, y = cy + Math.sin(a) * d;
+      sg.fillStyle = r() < 0.5 ? "rgba(255,240,220,.07)" : "rgba(0,0,10,.18)";
+      sg.fillRect(x, y, k * (0.6 + r()), k * (0.6 + r()));
+    }
+    // warm sunrise rim on the lit side
+    const rim = sg.createLinearGradient(cx - pr, cy - pr, cx + pr * 0.4, cy + pr * 0.4);
+    rim.addColorStop(0, "rgba(255,190,110,.85)"); rim.addColorStop(0.45, "rgba(232,162,58,.18)"); rim.addColorStop(1, "rgba(232,162,58,0)");
+    sg.strokeStyle = rim; sg.lineWidth = Math.max(1.2 * k, pr * 0.06); stonePath(sg, s, k); sg.stroke();
+    sg.restore();
+  }
+}
+
+// ================= pattern =================
+function smin(a, b, k) { const hh = clamp(0.5 + 0.5 * (b - a) / k, 0, 1); return b + (a - b) * hh - k * hh * (1 - hh); }
+function makePattern() {
+  const rings = SPACING * 4, r = rng(3);
+  const n1 = r() * 100, n2 = r() * 100;
+  for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) {
+    const i = y * GW + x;
+    let d = 1e9; for (const s of stones) d = smin(d, stoneDist(s, x + 0.5, y + 0.5), SPACING * 1.4);
+    const lineCoord = portrait ? x : y;
+    const ph = d < rings ? d / SPACING : (lineCoord + 0.5) / SPACING;
+    const wobble = 0.08 * Math.sin(x * 0.05 + n1) * Math.sin(y * 0.043 + n2);
+    target[i] = solid[i] ? 0 : BASE - AMP * Math.cos(TAU * ph) + wobble;
+  }
+}
+
+// ================= tilt input =================
+let rawRoll = 0, rawPitch = 0, zero = null, haveSensor = false, shake = 0;
+let tiltX = 0, tiltY = 0;              // smoothed, -1..1, in screen axes (+x = sand flows right, +y = flows down)
+let deskX = 0, deskY = 0, kb = { x: 0, y: 0 }, shiftTilt = false;
+function screenAngle() { return (screen.orientation && screen.orientation.angle) ?? (window.orientation || 0); }
+function onOrient(e) {
+  if (e.beta == null) return; haveSensor = true;
+  const b = e.beta * D2R, gm = e.gamma * D2R;
+  const ux = -Math.cos(b) * Math.sin(gm), uy = Math.sin(b), uz = Math.cos(b) * Math.cos(gm);
+  const a = screenAngle() * D2R;
+  const ssx = ux * Math.cos(a) + uy * Math.sin(a), ssy = -ux * Math.sin(a) + uy * Math.cos(a);
+  rawRoll = Math.asin(clamp(-ssx, -1, 1)) * R2D;  // right edge down = +
+  rawPitch = Math.atan2(uz, ssy) * R2D;           // top edge away = +
+  if (!zero) zero = { r: rawRoll, p: rawPitch };
+}
+function onMotion(e) { const a = e.acceleration; if (!a || a.x == null) return; const m = Math.hypot(a.x, a.y, a.z); if (m > 7) shake = Math.min(1, Math.max(shake, (m - 7) / 9)); }
+function recenter() { zero = haveSensor ? { r: rawRoll, p: rawPitch } : null; deskX = deskY = 0; }
+document.getElementById("recenter").addEventListener("click", recenter);
+const dz = v => { const s = Math.sign(v), a = Math.abs(v); return a < DEAD ? 0 : s * Math.min(1, (a - DEAD) / (FULL - DEAD)); };
+function updateTilt() {
+  let tx = 0, ty = 0;
+  if (haveSensor && zero) {
+    let dr = rawRoll - zero.r, dp = rawPitch - zero.p; if (dp > 180) dp -= 360; if (dp < -180) dp += 360;
+    tx = dz(dr); ty = -dz(dp);
+  } else {
+    if (!shiftTilt) { deskX *= 0.9; deskY *= 0.9; }
+    tx = clamp(deskX + kb.x, -1, 1); ty = clamp(deskY + kb.y, -1, 1);
+  }
+  tiltX += 0.2 * (tx - tiltX); tiltY += 0.2 * (ty - tiltY);
+  if (Math.abs(tiltX) < 1e-3) tiltX = 0; if (Math.abs(tiltY) < 1e-3) tiltY = 0;
+}
+// desktop fallback: hold Shift and move the mouse to tilt; arrow keys / WASD also tilt
+addEventListener("mousemove", e => { shiftTilt = e.shiftKey && !haveSensor; if (shiftTilt) { deskX = (e.clientX / innerWidth - 0.5) * 2.2; deskY = (e.clientY / innerHeight - 0.5) * 2.2; } });
+const KT = { ArrowLeft: [-1, 0], KeyA: [-1, 0], ArrowRight: [1, 0], KeyD: [1, 0], ArrowUp: [0, -1], KeyW: [0, -1], ArrowDown: [0, 1], KeyS: [0, 1] };
+const kdown = new Set();
+function kbUpdate() { kb.x = 0; kb.y = 0; for (const c of kdown) { kb.x += KT[c][0] * 0.8; kb.y += KT[c][1] * 0.8; } }
+addEventListener("keydown", e => {
+  if (e.code in KT) { kdown.add(e.code); kbUpdate(); e.preventDefault(); }
+  else if (e.code === "KeyR" && !e.repeat) rerake();
+  else if (e.code === "Space" && !e.repeat) { startSmooth(); e.preventDefault(); }
+  else if (e.code === "KeyM" && !e.repeat) toggleSound();
+  if (e.key === "Shift") shiftTilt = !haveSensor;
+});
+addEventListener("keyup", e => { if (e.code in KT) { kdown.delete(e.code); kbUpdate(); } if (e.key === "Shift") shiftTilt = false; });
+addEventListener("blur", () => { kdown.clear(); kbUpdate(); shiftTilt = false; });
+
+// ================= rake + ripple =================
+const rakes = new Map(); // pointerId -> {x,y,dx,dy,moved,speed,t}
+let activity = 0;        // frames of forced simulation after edits
+cv.addEventListener("pointerdown", e => {
+  if (e.shiftKey && !haveSensor) return; // shift-drag on desktop tilts instead
+  cv.setPointerCapture(e.pointerId);
+  const x = e.clientX / sx, y = e.clientY / sy;
+  rakes.set(e.pointerId, { x, y, dx: portrait ? 0 : 1, dy: portrait ? 1 : 0, moved: 0, speed: 0, t: performance.now(), sx: e.clientX, sy: e.clientY, lastStone: false });
+});
+cv.addEventListener("pointermove", e => {
+  const R = rakes.get(e.pointerId); if (!R) return;
+  const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+  for (const ev of (evs.length ? evs : [e])) rakeTo(R, ev.clientX / sx, ev.clientY / sy, ev.timeStamp || performance.now());
+});
+const endRake = e => {
+  const R = rakes.get(e.pointerId); if (!R) return; rakes.delete(e.pointerId); dirty = true;
+  if (R.moved < 1.5 && Math.hypot(e.clientX - R.sx, e.clientY - R.sy) < 8) ripple(R.x, R.y);
+};
+cv.addEventListener("pointerup", endRake); cv.addEventListener("pointercancel", endRake);
+cv.addEventListener("contextmenu", e => e.preventDefault());
+
+function rakeTo(R, x, y, t) {
+  const mx = x - R.x, my = y - R.y, d = Math.hypot(mx, my);
+  if (d < 0.35) return;
+  const dt = Math.max(1, t - R.t); R.speed = 0.7 * R.speed + 0.3 * (d * sx / dt * 1000); R.t = t;
+  // rake head turns smoothly toward the direction of travel
+  let ndx = R.dx + (mx / d - R.dx) * Math.min(1, d * 0.35), ndy = R.dy + (my / d - R.dy) * Math.min(1, d * 0.35);
+  const nl = Math.hypot(ndx, ndy) || 1; ndx /= nl; ndy /= nl;
+  const steps = Math.ceil(d / 0.5);
+  for (let s = 1; s <= steps; s++) {
+    const f = s / steps, px = R.x + mx * f, py = R.y + my * f;
+    stampRake(px, py, R.dx + (ndx - R.dx) * f, R.dy + (ndy - R.dy) * f, R);
+  }
+  R.x = x; R.y = y; R.dx = ndx; R.dy = ndy; R.moved += d;
+  activity = 40; dirty = true;
+}
+function stampRake(cx, cy, dx, dy, R) {
+  const nx = -dy, ny = dx, half = (TINES - 1) / 2 * SPACING + SPACING * 0.75, rad = half + 2;
+  const x0 = Math.max(1, Math.floor(cx - rad)), x1 = Math.min(GW - 2, Math.ceil(cx + rad));
+  const y0 = Math.max(1, Math.floor(cy - rad)), y1 = Math.min(GH - 2, Math.ceil(cy + rad));
+  // local mean keeps the sand volume roughly constant as grooves are pushed into ridges
+  let sum = 0, cnt = 0;
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+    const i = y * GW + x; if (solid[i]) continue;
+    const u = (x + 0.5 - cx) * nx + (y + 0.5 - cy) * ny, v = (x + 0.5 - cx) * dx + (y + 0.5 - cy) * dy;
+    if (Math.abs(v) < 1.2 && Math.abs(u) < half) { sum += h[i]; cnt++; }
+  }
+  if (!cnt) { if (!R.lastStone) { R.lastStone = true; touchStone(); } return; }
+  R.lastStone = false;
+  const mean = sum / cnt;
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+    const i = y * GW + x; if (solid[i]) continue;
+    const u = (x + 0.5 - cx) * nx + (y + 0.5 - cy) * ny, v = (x + 0.5 - cx) * dx + (y + 0.5 - cy) * dy;
+    const au = Math.abs(u); if (au > half || Math.abs(v) > 1.2) continue;
+    const w = (1 - smoothstep(half - SPACING * 0.75, half, au)) * (1 - smoothstep(0.4, 1.2, Math.abs(v)));
+    const tgt = mean - AMP * Math.cos(TAU * u / SPACING);
+    h[i] += (tgt - h[i]) * 0.55 * w;
+  }
+}
+function ripple(cx, cy) {
+  const rad = SPACING * 4;
+  const x0 = Math.max(1, Math.floor(cx - rad)), x1 = Math.min(GW - 2, Math.ceil(cx + rad));
+  const y0 = Math.max(1, Math.floor(cy - rad)), y1 = Math.min(GH - 2, Math.ceil(cy + rad));
+  let sum = 0, cnt = 0;
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) { const i = y * GW + x; if (!solid[i]) { sum += h[i]; cnt++; } }
+  if (!cnt) return; const mean = sum / cnt;
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+    const i = y * GW + x; if (solid[i]) continue;
+    const r = Math.hypot(x + 0.5 - cx, y + 0.5 - cy); if (r > rad) continue;
+    const w = 1 - smoothstep(rad - SPACING * 1.2, rad, r);
+    h[i] += (mean - AMP * Math.cos(TAU * r / SPACING) - h[i]) * 0.8 * w;
+  }
+  activity = 40; dirty = true; chime(0.9);
+}
+
+// ================= smooth / re-rake =================
+let smoothT = 0, wipe = null;
+function startSmooth() { smoothT = 75; activity = 80; wipe = null; swish(0.6); }
+function rerake() {
+  smoothT = 0; makePattern();
+  wipe = { p: -SPACING * 3, len: portrait ? GH : GW, speed: (portrait ? GH : GW) / 95 };
+  swish(1); chime(0.7);
+}
+document.getElementById("smooth").addEventListener("click", startSmooth);
+document.getElementById("rerake").addEventListener("click", rerake);
+function stepWipe() {
+  if (!wipe) return;
+  wipe.p += wipe.speed;
+  const band = SPACING * 3, a = Math.max(0, Math.floor(wipe.p - band)), b = Math.min(wipe.len - 1, Math.floor(wipe.p));
+  for (let q = a; q <= b; q++) {
+    const k = 0.25 + 0.75 * (1 - (wipe.p - q) / band);
+    if (portrait) { const r0 = q * GW; for (let x = 0; x < GW; x++) { const i = r0 + x; if (!solid[i]) h[i] += (target[i] - h[i]) * (wipe.p - q > band - 1 ? 1 : k * 0.5); } }
+    else for (let y = 0; y < GH; y++) { const i = y * GW + q; if (!solid[i]) h[i] += (target[i] - h[i]) * (wipe.p - q > band - 1 ? 1 : k * 0.5); }
+  }
+  activity = 30; dirty = true;
+  if (wipe.p > wipe.len + band) { for (let i = 0; i < N; i++) if (!solid[i]) h[i] = target[i]; wipe = null; }
+}
+
+// ================= sand physics =================
+// Mass-conserving edge fluxes on the heightfield. Sand moves across an edge only when the step (plus the
+// tilt's downhill pull) exceeds the angle of repose, so grooves hold at rest and slump when you tilt.
+let flowLevel = 0, sweep = 0;
+function relax(gx, gy, diff) {
+  const T = TALUS, kx = gx * TILT_K, ky = gy * TILT_K;
+  let moved = 0;
+  sweep ^= 1;
+  // horizontal edges
+  for (let y = 0; y < GH; y++) {
+    const r0 = y * GW;
+    for (let xx = 0; xx < GW - 1; xx++) {
+      const x = sweep ? xx : GW - 2 - xx, i = r0 + x, j = i + 1;
+      if (solid[i] | solid[j]) continue;
+      const d = h[i] - h[j] + kx;
+      let q = d > T ? (d - T) * FLOW_RATE : d < -T ? (d + T) * FLOW_RATE : 0;
+      if (diff) q += (h[i] - h[j]) * diff;
+      if (q > 0) { if (q > h[i]) q = h[i]; } else if (q < 0) { if (-q > h[j]) q = -h[j]; } else continue;
+      h[i] -= q; h[j] += q; moved += q < 0 ? -q : q;
+    }
+  }
+  // vertical edges
+  for (let yy = 0; yy < GH - 1; yy++) {
+    const y = sweep ? yy : GH - 2 - yy, r0 = y * GW;
+    for (let x = 0; x < GW; x++) {
+      const i = r0 + x, j = i + GW;
+      if (solid[i] | solid[j]) continue;
+      const d = h[i] - h[j] + ky;
+      let q = d > T ? (d - T) * FLOW_RATE : d < -T ? (d + T) * FLOW_RATE : 0;
+      if (diff) q += (h[i] - h[j]) * diff;
+      if (q > 0) { if (q > h[i]) q = h[i]; } else if (q < 0) { if (-q > h[j]) q = -h[j]; } else continue;
+      h[i] -= q; h[j] += q; moved += q < 0 ? -q : q;
+    }
+  }
+  return moved;
+}
+function simulate() {
+  updateTilt();
+  shake *= 0.94;
+  const tilting = tiltX !== 0 || tiltY !== 0;
+  let diff = 0;
+  if (smoothT > 0) { diff = 0.18 * Math.min(1, smoothT / 20); smoothT--; }
+  if (shake > 0.02) diff = Math.max(diff, shake * 0.2);
+  stepWipe();
+  let moved = 0;
+  if (tilting || activity > 0 || diff > 0) {
+    for (let s = 0; s < SUBSTEPS; s++) moved += relax(tiltX, tiltY, diff);
+    if (moved > N * 1e-5) { dirty = true; activity = Math.max(activity, 2); }
+    if (activity > 0) activity--;
+  }
+  flowLevel += 0.15 * (moved / N - flowLevel);
+}
+
+// ================= rendering =================
+// shading LUT: deep navy shadows -> dusky violet -> warm sand -> sunrise highlight
+const LUT = new Uint32Array(256);
+(function () {
+  const stops = [[0, [14, 18, 34]], [0.22, [46, 42, 66]], [0.45, [121, 92, 76]], [0.62, [178, 132, 88]], [0.8, [226, 172, 108]], [1, [255, 226, 178]]];
+  for (let i = 0; i < 256; i++) {
+    const t = i / 255; let k = 0; while (k < stops.length - 2 && t > stops[k + 1][0]) k++;
+    const [ta, a] = stops[k], [tb, b] = stops[k + 1], f = (t - ta) / (tb - ta);
+    const c = a.map((v, j) => Math.round(v + (b[j] - v) * f));
+    LUT[i] = 0xff000000 | (c[2] << 16) | (c[1] << 8) | c[0];
+  }
+})();
+let dirty = true, lightX = -0.74, lightY = -0.62, noisePat = null;
+function makeNoise() {
+  const c = document.createElement("canvas"); c.width = c.height = 128; const x = c.getContext("2d"), d = x.createImageData(128, 128), r = rng(11);
+  for (let i = 0; i < d.data.length; i += 4) { const v = (r() * 255) | 0; d.data[i] = d.data[i + 1] = d.data[i + 2] = v; d.data[i + 3] = 255; }
+  x.putImageData(d, 0, 0); noisePat = g.createPattern(c, "repeat");
+}
+function shadeSand() {
+  // the low sun drifts slightly with tilt so the grooves catch the light as you move
+  const lx = lightX + tiltX * 0.25, ly = lightY + tiltY * 0.25, ll = Math.hypot(lx, ly), Lx = lx / ll, Ly = ly / ll;
+  const gain = 66, W = GW;
+  for (let y = 0; y < GH; y++) {
+    const ym = y > 0 ? -W : 0, yp = y < GH - 1 ? W : 0, r0 = y * W;
+    for (let x = 0; x < W; x++) {
+      const i = r0 + x;
+      if (solid[i]) { px32[i] = LUT[120]; continue; } // hidden under the stone layer; sand-coloured so edges blend
+      const hi = h[i], il = x > 0 ? i - 1 : i, ir = x < W - 1 ? i + 1 : i, iu = i + ym, id = i + yp;
+      // stone neighbours read as the same height so the sand meets the stone cleanly
+      const hl = solid[il] ? hi : h[il], hr = solid[ir] ? hi : h[ir], hu = solid[iu] ? hi : h[iu], hd = solid[id] ? hi : h[id];
+      const dx = hr - hl, dy = hd - hu;
+      let s = 132 + (dx * Lx + dy * Ly) * gain + (hi - BASE) * 9 + grain[i];
+      s = s < 0 ? 0 : s > 255 ? 255 : s | 0;
+      let c = LUT[s];
+      if (hi < 1.4) { // sand poured away: reveal the glowing floor
+        const t = 1 - hi / 1.4, fc = floorCol[i];
+        const r = (c & 255) + (((fc & 255) - (c & 255)) * t), gg = ((c >> 8) & 255) + ((((fc >> 8) & 255) - ((c >> 8) & 255)) * t), b = ((c >> 16) & 255) + ((((fc >> 16) & 255) - ((c >> 16) & 255)) * t);
+        c = 0xff000000 | ((b | 0) << 16) | ((gg | 0) << 8) | (r | 0);
+      }
+      px32[i] = c;
+    }
+  }
+  og.putImageData(img, 0, 0);
+}
+let t0 = performance.now();
+function draw(now) {
+  const Wd = cv.width, Hd = cv.height;
+  shadeSand();
+  g.imageSmoothingEnabled = true; g.imageSmoothingQuality = "high";
+  g.drawImage(off, 0, 0, Wd, Hd);
+  // sunrise wash from the upper right, navy falloff toward the lower left
+  g.globalCompositeOperation = "soft-light";
+  const sun = g.createRadialGradient(Wd * 0.85, -Hd * 0.1, 0, Wd * 0.85, -Hd * 0.1, Math.max(Wd, Hd) * 1.1);
+  sun.addColorStop(0, "rgba(255,170,90,.55)"); sun.addColorStop(0.5, "rgba(232,120,70,.18)"); sun.addColorStop(1, "rgba(20,30,70,.5)");
+  g.fillStyle = sun; g.fillRect(0, 0, Wd, Hd);
+  g.globalCompositeOperation = "overlay"; g.globalAlpha = 0.07; g.fillStyle = noisePat; g.fillRect(0, 0, Wd, Hd);
+  g.globalAlpha = 1; g.globalCompositeOperation = "source-over";
+  g.drawImage(stoneLayer, 0, 0);
+  // vignette
+  const vg = g.createRadialGradient(Wd / 2, Hd / 2, Math.min(Wd, Hd) * 0.35, Wd / 2, Hd / 2, Math.hypot(Wd, Hd) * 0.6);
+  vg.addColorStop(0, "rgba(11,13,18,0)"); vg.addColorStop(1, "rgba(11,13,18,.55)");
+  g.fillStyle = vg; g.fillRect(0, 0, Wd, Hd);
+  // rake heads
+  for (const R of rakes.values()) drawRake(R);
+  if (wipe) drawWipe();
+}
+function drawRake(R) {
+  const k = dpr, nx = -R.dy, ny = R.dx, cx = R.x * sx * k, cy = R.y * sy * k, half = (TINES - 1) / 2 * SPACING;
+  g.save(); g.shadowColor = "#e8a23a"; g.shadowBlur = 14 * k; g.strokeStyle = "rgba(240,184,90,.55)"; g.lineWidth = 1.5 * k;
+  g.beginPath(); g.moveTo(cx - nx * (half + 1.5) * sx * k, cy - ny * (half + 1.5) * sy * k); g.lineTo(cx + nx * (half + 1.5) * sx * k, cy + ny * (half + 1.5) * sy * k); g.stroke();
+  g.fillStyle = "rgba(255,214,150,.95)";
+  for (let t = 0; t < TINES; t++) { const u = (t - (TINES - 1) / 2) * SPACING; g.beginPath(); g.arc(cx + nx * u * sx * k, cy + ny * u * sy * k, 2.2 * k, 0, TAU); g.fill(); }
+  g.restore();
+}
+function drawWipe() {
+  const k = dpr; g.save(); g.shadowColor = "#e8a23a"; g.shadowBlur = 18 * k; g.strokeStyle = "rgba(240,184,90,.6)"; g.lineWidth = 1.5 * k; g.beginPath();
+  if (portrait) { const y = wipe.p * sy * k; g.moveTo(0, y); g.lineTo(cv.width, y); } else { const x = wipe.p * sx * k; g.moveTo(x, 0); g.lineTo(x, cv.height); }
+  g.stroke(); g.restore(); dirty = true;
+}
+const readout = document.getElementById("readout");
+let lastRead = "";
+function frame(now) {
+  requestAnimationFrame(frame);
+  simulate();
+  if (rakes.size) dirty = true;
+  if (dirty) { dirty = false; draw(now); }
+  const ang = Math.round(Math.hypot(tiltX, tiltY) * FULL);
+  const txt = ang ? `TILT ${ang}°` : "LEVEL";
+  if (txt !== lastRead) { readout.textContent = txt; lastRead = txt; }
+  audioTick();
+}
+
+// ================= ambient sound (Web Audio, synthesized, no files) =================
+let ac = null, au = null, soundOn = localStorage.getItem("garden-sound") !== "off";
+function noiseBuffer(sec) { const b = ac.createBuffer(1, ac.sampleRate * sec, ac.sampleRate), d = b.getChannelData(0); let p = 0; for (let i = 0; i < d.length; i++) { const w = Math.random() * 2 - 1; p = 0.97 * p + 0.03 * w; d[i] = w * 0.6 + p * 3; } return b; }
+function buildAudio() {
+  const AC = window.AudioContext || window.webkitAudioContext; ac = new AC();
+  const t = ac.currentTime;
+  const master = ac.createGain(); master.gain.value = 0;
+  const comp = ac.createDynamicsCompressor(); comp.threshold.value = -18; comp.ratio.value = 4;
+  master.connect(comp); comp.connect(ac.destination);
+  // procedural reverb (generated impulse, no file)
+  const verb = ac.createConvolver(), len = ac.sampleRate * 3.2, ir = ac.createBuffer(2, len, ac.sampleRate);
+  for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3.2); }
+  verb.buffer = ir; const wet = ac.createGain(); wet.gain.value = 0.55; verb.connect(wet); wet.connect(master);
+  // drone: soft E / B pad through a slowly breathing lowpass
+  const pad = ac.createGain(); pad.gain.value = 0.045;
+  const lp = ac.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 420; lp.Q.value = 0.4;
+  const lfo = ac.createOscillator(); lfo.frequency.value = 0.04; const lfoA = ac.createGain(); lfoA.gain.value = 180; lfo.connect(lfoA); lfoA.connect(lp.frequency);
+  for (const [f, type, det] of [[82.41, "sine", 0], [123.47, "triangle", 4], [164.81, "triangle", -5], [246.94, "sine", 3]]) {
+    const o = ac.createOscillator(); o.type = type; o.frequency.value = f; o.detune.value = det; const og2 = ac.createGain(); og2.gain.value = f > 200 ? 0.25 : 0.6; o.connect(og2); og2.connect(lp); o.start(t);
+  }
+  lp.connect(pad); pad.connect(master); pad.connect(verb); lfo.start(t);
+  // sand hiss: follows how much sand is flowing
+  const nb = noiseBuffer(3);
+  const hissSrc = ac.createBufferSource(); hissSrc.buffer = nb; hissSrc.loop = true;
+  const hp = ac.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 1800;
+  const bp = ac.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 4200; bp.Q.value = 0.6;
+  const hiss = ac.createGain(); hiss.gain.value = 0;
+  hissSrc.connect(hp); hp.connect(bp); bp.connect(hiss); hiss.connect(master); hiss.connect(verb); hissSrc.start(t);
+  // rake scrape: follows drag speed
+  const rakeSrc = ac.createBufferSource(); rakeSrc.buffer = nb; rakeSrc.loop = true; rakeSrc.playbackRate.value = 0.7;
+  const rbp = ac.createBiquadFilter(); rbp.type = "bandpass"; rbp.frequency.value = 900; rbp.Q.value = 1.1;
+  const rake = ac.createGain(); rake.gain.value = 0;
+  rakeSrc.connect(rbp); rbp.connect(rake); rake.connect(master); rake.connect(verb); rakeSrc.start(t, 1.3);
+  au = { master, verb, hiss, bp, rake, rbp };
+  setMaster(); scheduleAmbientChime();
+}
+function setMaster() { if (!au) return; au.master.gain.setTargetAtTime(soundOn ? 0.9 : 0, ac.currentTime, 0.4); }
+function toggleSound() {
+  soundOn = !soundOn; localStorage.setItem("garden-sound", soundOn ? "on" : "off");
+  document.getElementById("sound").setAttribute("aria-pressed", soundOn); setMaster();
+}
+document.getElementById("sound").addEventListener("click", toggleSound);
+document.getElementById("sound").setAttribute("aria-pressed", soundOn);
+const PENTA = [329.63, 392.0, 440.0, 493.88, 587.33, 659.25, 783.99]; // E minor pentatonic, E4 up
+let lastChime = 0;
+function chime(vel) {
+  if (!ac || !soundOn) return; const t = ac.currentTime; if (t - lastChime < 0.18) return; lastChime = t;
+  const f = PENTA[(Math.random() * PENTA.length) | 0];
+  const out = ac.createGain(); out.gain.value = 0.05 * vel; out.connect(au.master); out.connect(au.verb);
+  [[1, 1, 4.5], [2.76, 0.35, 1.8], [5.4, 0.14, 0.9], [8.93, 0.06, 0.5]].forEach(([ratio, amp, dec]) => {
+    const o = ac.createOscillator(), e = ac.createGain(); o.frequency.value = f * ratio; e.gain.setValueAtTime(0, t); e.gain.linearRampToValueAtTime(amp, t + 0.008); e.gain.exponentialRampToValueAtTime(0.0001, t + dec);
+    o.connect(e); e.connect(out); o.start(t); o.stop(t + dec + 0.05);
+  });
+}
+function touchStone() { chime(0.6); }
+function swish(vel) {
+  if (!ac || !soundOn) return; const t = ac.currentTime;
+  au.rake.gain.cancelScheduledValues(t); au.rake.gain.setTargetAtTime(0.07 * vel, t, 0.08); au.rake.gain.setTargetAtTime(0, t + 0.9, 0.4);
+}
+function scheduleAmbientChime() { setTimeout(() => { if (!document.hidden) chime(0.35); scheduleAmbientChime(); }, 11000 + Math.random() * 14000); }
+let rakeLvl = 0;
+function audioTick() {
+  if (!au) return; const t = ac.currentTime;
+  const hiss = Math.min(0.14, Math.sqrt(flowLevel) * 0.12); // flowLevel ~0.01 gentle tilt, ~2.6 hard pour
+  au.hiss.gain.setTargetAtTime(hiss, t, 0.08); au.bp.frequency.setTargetAtTime(3200 + hiss * 9000, t, 0.1);
+  let sp = 0; for (const R of rakes.values()) sp = Math.max(sp, R.speed);
+  rakeLvl += 0.2 * (Math.min(1, sp / 900) - rakeLvl);
+  if (rakes.size || rakeLvl > 0.01) { au.rake.gain.setTargetAtTime(0.11 * rakeLvl, t, 0.05); au.rbp.frequency.setTargetAtTime(600 + rakeLvl * 900, t, 0.05); }
+  for (const R of rakes.values()) R.speed *= 0.9; // decays when the finger stops
+}
+document.addEventListener("visibilitychange", () => { if (!ac) return; if (document.hidden) ac.suspend(); else ac.resume(); });
+
+// ================= start: one tap unlocks audio + asks for motion =================
+document.getElementById("go").addEventListener("click", () => {
+  try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch (_) {}
+  if (!ac) buildAudio(); ac.resume();
+  const msg = document.getElementById("msg");
+  const listen = () => { addEventListener("deviceorientation", onOrient); addEventListener("devicemotion", onMotion); };
+  const DOE = window.DeviceOrientationEvent, DME = window.DeviceMotionEvent;
+  const done = () => {
+    document.getElementById("start").remove(); chime(0.8);
+    setTimeout(() => { if (!haveSensor) document.getElementById("note").textContent = "DRAG = RAKE · TAP = RIPPLE · SHIFT+MOUSE OR ARROWS = TILT · SPACE = SMOOTH"; }, 800);
+  };
+  if (DOE && typeof DOE.requestPermission === "function") {
+    const pO = DOE.requestPermission(), pM = (DME && typeof DME.requestPermission === "function") ? DME.requestPermission() : Promise.resolve("granted");
+    Promise.all([pO, pM]).then(([o, m]) => { if (o === "granted") addEventListener("deviceorientation", onOrient); else msg.textContent = "Motion off. Raking still works."; if (m === "granted") addEventListener("devicemotion", onMotion); done(); })
+      .catch(() => { msg.textContent = "Motion unavailable. Raking still works."; done(); });
+  } else { listen(); done(); }
+});
+
+// ================= boot =================
+makeNoise(); buildGrid(); requestAnimationFrame(frame);
+// tiny hook for automated tests and tinkering in the console
+window.garden = { bench: n => { const t = performance.now(); for (let k = 0; k < n; k++) { simulate(); draw(); } return (performance.now() - t) / n; }, stats: () => ({ GW, GH, N, flowLevel, tiltX, tiltY, mass: h.reduce((a, b) => a + b, 0) }), rerake, smooth: startSmooth, ripple: (x, y) => ripple(x / sx, y / sy) };
+</script>
+</body>
+</html>

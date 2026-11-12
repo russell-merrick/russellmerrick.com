@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0b0d12">
+<title>Russell Merrick — Tilt Bass</title>
+<meta name="description" content="Play a tilt-controlled bass synth in your browser, then explore Russell Merrick's music, Nandland, and projects.">
+<meta name="author" content="Russell Merrick">
+<link rel="canonical" href="https://russellmerrick.com/">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Russell Merrick">
+<meta property="og:title" content="Russell Merrick — Tilt Bass">
+<meta property="og:description" content="Tilt your phone, play the bass. Music, Nandland, and projects inside.">
+<meta property="og:url" content="https://russellmerrick.com/">
+<meta property="og:image" content="https://russellmerrick.com/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+@font-face{font-family:"IBM Plex Sans";font-weight:500;font-display:swap;src:url(fonts/ibm-plex-sans-500.woff2) format("woff2")}
+@font-face{font-family:"IBM Plex Mono";font-weight:400;font-display:swap;src:url(fonts/ibm-plex-mono-400.woff2) format("woff2")}
+:root{--bg:#0b0d12;--elev:#14161c;--border:#2a2f3a;--text:#e8eaef;--dim:#9aa1b3;--accent:#e8a23a;--glow:rgba(232,162,58,.35)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:"IBM Plex Sans",system-ui,sans-serif;overflow:hidden;overscroll-behavior:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+#viz{position:fixed;inset:0;width:100%;height:100%;display:block}
+#hud{position:fixed;top:max(12px,env(safe-area-inset-top));left:16px;right:16px;display:flex;justify-content:space-between;font:400 11px/1.4 "IBM Plex Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);pointer-events:none}
+#hud b{color:var(--accent);font-weight:400}
+#keys{position:fixed;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:10px max(12px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));height:min(34vh,190px);touch-action:none}
+.key{position:relative;border:1px solid var(--border);border-radius:14px;background:linear-gradient(180deg,#171a22,#101219);display:flex;align-items:flex-end;justify-content:center;padding-bottom:12px;font:400 12px "IBM Plex Mono",monospace;letter-spacing:.12em;color:var(--dim);transition:box-shadow .12s,border-color .12s,transform .06s;touch-action:none}
+.key::before{content:"";position:absolute;top:14px;left:50%;width:clamp(22px,30%,46px);aspect-ratio:1;transform:translateX(-50%);border-radius:50%;border:2px solid var(--kc);opacity:.55;box-shadow:0 0 0 rgba(0,0,0,0)}
+.key.on{border-color:var(--kc);transform:scale(.98);box-shadow:0 0 28px -4px var(--kc),inset 0 0 24px -8px var(--kc);color:var(--text)}
+.key.on::before{opacity:1;background:var(--kc);box-shadow:0 0 22px var(--kc)}
+#hud .right{display:flex;gap:8px;align-items:center;pointer-events:auto}
+.chip{background:none;border:1px solid var(--border);color:var(--dim);font:inherit;letter-spacing:inherit;padding:4px 8px;border-radius:6px;text-decoration:none;cursor:pointer}
+.chip.accent{color:var(--accent);border-color:rgba(232,162,58,.5)}
+.chip.accent:hover,.chip.accent:focus-visible{background:var(--accent);color:#1a1308}
+#loopctl{display:none;align-items:center;gap:6px}
+#loopctl.ready{display:flex}
+#loopvol{width:70px;accent-color:var(--accent)}
+/* experience switcher: add future experiences as more <a> entries (same markup on every experience page) */
+.exps{display:flex;border:1px solid var(--border);border-radius:6px;overflow:hidden}
+.exps a{color:var(--dim);text-decoration:none;padding:4px 8px;line-height:1.4}
+.exps a+a{border-left:1px solid var(--border)}
+.exps a:hover,.exps a:focus-visible{color:var(--text);outline:none}
+.exps a[aria-current="page"]{color:#1a1308;background:var(--accent)}
+@media (min-width:521px){#hud .short{display:none}}
+#loopbtn[aria-pressed="false"]{opacity:.55;text-decoration:line-through}
+#skip{color:var(--dim);font:400 11px "IBM Plex Mono",monospace;letter-spacing:.14em;text-transform:uppercase;text-decoration:none;border-bottom:1px solid var(--border);padding-bottom:2px}
+#skip:hover{color:var(--accent)}
+#start .alt{color:var(--dim);font:400 11px "IBM Plex Mono",monospace;letter-spacing:.14em;text-transform:uppercase}
+#start .alt a{color:var(--dim);text-decoration:none;border-bottom:1px solid var(--border)}
+#hud{white-space:nowrap;align-items:center;gap:8px}
+#note{right:16px;line-height:1.5}
+@media (max-width:520px){#readout,#hud .long{display:none}#loopvol{width:52px}#note{font-size:9px}}
+#start{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:radial-gradient(ellipse 70% 50% at 50% 40%,rgba(232,162,58,.10),transparent),var(--bg);z-index:5;text-align:center;padding:24px}
+#start h1{margin:0;font-weight:500;font-size:clamp(28px,7vw,48px);letter-spacing:-.01em}
+#start p{margin:0;color:var(--dim);font:400 12px/1.6 "IBM Plex Mono",monospace;letter-spacing:.12em;text-transform:uppercase;max-width:34ch}
+#go{appearance:none;border:0;border-radius:999px;background:var(--accent);color:#1a1308;font:500 16px "IBM Plex Sans",sans-serif;padding:16px 34px;box-shadow:0 0 40px -6px var(--glow);cursor:pointer}
+#note{position:fixed;left:16px;bottom:calc(min(34vh,190px) + 10px);font:400 11px "IBM Plex Mono",monospace;letter-spacing:.12em;color:var(--dim);pointer-events:none}
+@media (max-width:420px){.exps a{padding:4px 6px;letter-spacing:.06em}#hud .right{gap:6px}}
+</style>
+</head>
+<body>
+<canvas id="viz"></canvas>
+<div id="hud"><span><span class="long">RUSSELL MERRICK / </span><b class="long">TILT BASS</b></span><span id="readout">—</span>
+  <span class="right">
+    <span id="loopctl"><button id="loopbtn" class="chip" aria-pressed="true" title="Backing track on/off">BEAT</button><input id="loopvol" type="range" min="0" max="1" step="0.01" value="0.7" aria-label="Backing track volume"></span>
+    <nav class="exps" aria-label="Experiences"><a href="./" aria-current="page">BASS</a><a href="garden/">GARDEN</a><a href="dream/">DREAM</a><a href="nebula/">NEBULA</a></nav>
+    <button id="recenter" class="chip"><span class="long">RECENTER</span><span class="short">⟲</span></button>
+    <a class="chip accent" href="about/"><span class="long">ENTER SITE →</span><span class="short">SITE →</span></a>
+  </span></div>
+<div id="note">ROLL = BEND · PITCH = FILTER · SHAKE = WOBBLE</div>
+<div id="keys">
+  <div class="key" data-i="0" style="--kc:#e8a23a"></div>
+  <div class="key" data-i="1" style="--kc:#f0b85a"></div>
+  <div class="key" data-i="2" style="--kc:#d9774a"></div>
+  <div class="key" data-i="3" style="--kc:#6f8fd6"></div>
+</div>
+<div id="start">
+  <h1>Tilt Bass</h1>
+  <p>Hold your phone sideways. Press the four keys. Tilt to bend and open the filter. Sound on.</p>
+  <button id="go">Tap to start</button>
+  <p id="msg" style="text-transform:none;letter-spacing:.04em"></p>
+  <a id="skip" href="about/">Skip to site →</a>
+  <span class="alt">or try the <a href="garden/">sand garden</a> · <a href="dream/">dream</a> · <a href="nebula/">nebula</a></span>
+</div>
+<script>
+"use strict";
+// ---------- config ----------
+// KEY: set to Orbital Overdrive's key once confirmed (not verifiable from public sources on Nov 12, 2026).
+// ROOT_MIDI 40 = E2. Others: F2 41, F#2 42, G2 43, G#2 44, A2 45, A#2 46, B2 47, C3 48 (use C2 36 / D2 38 etc. to stay low).
+const KEY = { root: 40, scale: "minor" };           // "minor" -> minor pentatonic, "major" -> major pentatonic
+const STEPS = { minor: [0, 3, 5, 7], major: [0, 2, 4, 7] }; // 4 keys: root + next three pentatonic tones
+const NOTE_NAMES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+const NOTES = STEPS[KEY.scale].map(s => KEY.root + s);   // sub oscillator plays an octave below
+// BACKING LOOP: drop the file at /audio/backing-loop.mp3. Set bpm + bars to trim MP3 encoder padding for a gapless loop.
+const LOOP = { url: "audio/backing-loop.mp3", bpm: null, bars: null, offset: 0, volume: 0.7 };
+const BEND_SEMIS = 2, ROLL_FULL = 30, PITCH_FULL = 30, DEAD = 4; // degrees
+const CUT_MIN = 140, CUT_MAX = 2600, GLIDE = 0.035;
+const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
+
+// ---------- audio ----------
+let ctx, nodes;
+function buildGraph() {
+  const AC = window.AudioContext || window.webkitAudioContext;
+  ctx = new AC({ latencyHint: "interactive" });
+  const t = ctx.currentTime;
+  const mk = (type, det = 0) => { const o = ctx.createOscillator(); o.type = type; o.detune.value = det; return o; };
+  const sawA = mk("sawtooth", -7), sawB = mk("sawtooth", +7), sq = mk("square", 0), sub = mk("sine", 0);
+  const gA = ctx.createGain(), gB = ctx.createGain(), gSq = ctx.createGain(), gSub = ctx.createGain();
+  gA.gain.value = 0.28; gB.gain.value = 0.28; gSq.gain.value = 0.12; gSub.gain.value = 0.55;
+  const mix = ctx.createGain();
+  // 24 dB/oct lowpass = two biquads
+  const lp1 = ctx.createBiquadFilter(), lp2 = ctx.createBiquadFilter();
+  lp1.type = lp2.type = "lowpass"; lp1.Q.value = 0.7; lp2.Q.value = 2;
+  lp1.frequency.value = lp2.frequency.value = 400;
+  // filter envelope adds Hz on top of tilt base via ConstantSource
+  const envSrc = ctx.createConstantSource(); envSrc.offset.value = 1;
+  const envAmt = ctx.createGain(); envAmt.gain.value = 0;
+  envSrc.connect(envAmt); envAmt.connect(lp1.frequency); envAmt.connect(lp2.frequency);
+  // saturation: soft tanh curve adds harmonics so phones "hear" the bass
+  const shaper = ctx.createWaveShaper(); shaper.curve = tanhCurve(2.2); shaper.oversample = "4x";
+  const vca = ctx.createGain(); vca.gain.value = 0;
+  const hp = ctx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 28; // DC / rumble guard
+  const master = ctx.createGain(); master.gain.value = 0.8;
+  const comp = ctx.createDynamicsCompressor();
+  comp.threshold.value = -10; comp.knee.value = 6; comp.ratio.value = 12; comp.attack.value = 0.003; comp.release.value = 0.12;
+  const analyser = ctx.createAnalyser(); analyser.fftSize = 2048; analyser.smoothingTimeConstant = 0.8;
+  // pitch control: shared detune bus (cents) -> all osc.detune
+  const bend = ctx.createConstantSource(); bend.offset.value = 0;
+  const vib = mk("sine"); vib.frequency.value = 5.2; const vibAmt = ctx.createGain(); vibAmt.gain.value = 0;
+  vib.connect(vibAmt);
+  // wobble LFO -> filter detune (cents)
+  const wob = mk("sine"); wob.frequency.value = 3.0; const wobAmt = ctx.createGain(); wobAmt.gain.value = 0;
+  wob.connect(wobAmt); wobAmt.connect(lp1.detune); wobAmt.connect(lp2.detune);
+  for (const o of [sawA, sawB, sq, sub]) { bend.connect(o.detune); vibAmt.connect(o.detune); }
+  sawA.connect(gA); sawB.connect(gB); sq.connect(gSq); sub.connect(gSub);
+  gA.connect(mix); gB.connect(mix); gSq.connect(mix); gSub.connect(mix);
+  mix.connect(lp1); lp1.connect(lp2); lp2.connect(shaper); shaper.connect(vca);
+  vca.connect(hp); hp.connect(master); master.connect(comp); comp.connect(analyser); analyser.connect(ctx.destination);
+  for (const s of [sawA, sawB, sq, sub, envSrc, bend, vib, wob]) s.start(t); // oscillators run forever; we gate the VCA
+  nodes = { comp, sawA, sawB, sq, sub, lp1, lp2, envAmt, vca, bend, vibAmt, wobAmt, analyser };
+  setNoteFreq(NOTES[0], 0);
+}
+function tanhCurve(k) { const n = 2048, c = new Float32Array(n); for (let i = 0; i < n; i++) { const x = i / (n - 1) * 2 - 1; c[i] = Math.tanh(k * x) / Math.tanh(k); } return c; }
+function setNoteFreq(m, glide) {
+  const t = ctx.currentTime, f = mtof(m), n = nodes;
+  for (const [o, mult] of [[n.sawA, 1], [n.sawB, 1], [n.sq, 1], [n.sub, 0.5]]) {
+    o.frequency.cancelScheduledValues(t);
+    if (glide > 0) o.frequency.setTargetAtTime(f * mult, t, glide / 3); else o.frequency.setValueAtTime(f * mult, t);
+  }
+}
+// mono, last-note priority, legato glide when overlapping
+const held = []; // stack of key indices
+function noteOn(i) {
+  if (!ctx) return;
+  const legato = held.length > 0;
+  const idx = held.indexOf(i); if (idx >= 0) held.splice(idx, 1);
+  held.push(i);
+  setNoteFreq(NOTES[i], legato ? GLIDE : 0);
+  const t = ctx.currentTime, n = nodes;
+  if (!legato) {
+    n.vca.gain.cancelScheduledValues(t); n.vca.gain.setTargetAtTime(0.9, t, 0.004);       // ~12 ms attack, click-free
+    n.envAmt.gain.cancelScheduledValues(t); n.envAmt.gain.setValueAtTime(0, t);
+    n.envAmt.gain.setTargetAtTime(1400, t, 0.005); n.envAmt.gain.setTargetAtTime(150, t + 0.02, 0.12); // pluck then sustain
+  }
+  render();
+}
+function noteOff(i) {
+  const idx = held.indexOf(i); if (idx < 0) return; held.splice(idx, 1);
+  if (!ctx) return;
+  const t = ctx.currentTime, n = nodes;
+  if (held.length) { setNoteFreq(NOTES[held[held.length - 1]], GLIDE); }
+  else { n.vca.gain.cancelScheduledValues(t); n.vca.gain.setTargetAtTime(0, t, 0.06); n.envAmt.gain.setTargetAtTime(0, t, 0.08); }
+  render();
+}
+
+// ---------- input: keys ----------
+const keyEls = [...document.querySelectorAll(".key")];
+keyEls.forEach((el, i) => el.textContent = NOTE_NAMES[NOTES[i] % 12]);
+const pointerKey = new Map(); // pointerId -> key index (supports sliding between keys)
+function keyAt(x, y) { const el = document.elementFromPoint(x, y); const k = el && el.closest(".key"); return k ? +k.dataset.i : -1; }
+const keysEl = document.getElementById("keys");
+keysEl.addEventListener("pointerdown", e => { e.preventDefault(); keysEl.setPointerCapture(e.pointerId); const k = keyAt(e.clientX, e.clientY); if (k >= 0) { pointerKey.set(e.pointerId, k); noteOn(k); } });
+keysEl.addEventListener("pointermove", e => { if (!pointerKey.has(e.pointerId)) return; const k = keyAt(e.clientX, e.clientY), old = pointerKey.get(e.pointerId); if (k >= 0 && k !== old) { pointerKey.set(e.pointerId, k); noteOn(k); noteOff(old); } });
+const up = e => { const k = pointerKey.get(e.pointerId); if (k === undefined) return; pointerKey.delete(e.pointerId); if (![...pointerKey.values()].includes(k)) noteOff(k); };
+keysEl.addEventListener("pointerup", up); keysEl.addEventListener("pointercancel", up);
+keysEl.addEventListener("contextmenu", e => e.preventDefault());
+// desktop: A S D F (or 1-4), space = wobble kick
+const KB = { KeyA: 0, KeyS: 1, KeyD: 2, KeyF: 3, Digit1: 0, Digit2: 1, Digit3: 2, Digit4: 3 };
+addEventListener("keydown", e => { if (e.repeat) return; if (e.code in KB) noteOn(KB[e.code]); if (e.code === "Space") shake = 1; });
+addEventListener("keyup", e => { if (e.code in KB) noteOff(KB[e.code]); });
+function render() { const s = new Set(held); keyEls.forEach((el, i) => el.classList.toggle("on", s.has(i))); }
+
+// ---------- input: tilt ----------
+// gravity "up" vector from Euler angles (sign-consistent across iOS/Android, no gimbal flip), then rotate to screen axes
+let roll = 0, pitch = 0, rawRoll = 0, rawPitch = 0, zero = null, shake = 0, haveSensor = false;
+const D2R = Math.PI / 180, R2D = 180 / Math.PI;
+function screenAngle() { return (screen.orientation && screen.orientation.angle) ?? (window.orientation || 0); }
+function onOrient(e) {
+  if (e.beta == null) return; haveSensor = true;
+  const b = e.beta * D2R, g = e.gamma * D2R;
+  const ux = -Math.cos(b) * Math.sin(g), uy = Math.sin(b), uz = Math.cos(b) * Math.cos(g);
+  const a = screenAngle() * D2R; // NOTE: verify sign of rotation on real devices (see plan.md testing)
+  const sx = ux * Math.cos(a) + uy * Math.sin(a), sy = -ux * Math.sin(a) + uy * Math.cos(a);
+  rawRoll = Math.asin(Math.max(-1, Math.min(1, -sx))) * R2D;   // right edge down = +
+  rawPitch = Math.atan2(uz, sy) * R2D;                           // top edge away = +
+  if (!zero) zero = { r: rawRoll, p: rawPitch };
+}
+function onMotion(e) { const a = e.acceleration; if (!a || a.x == null) return; const m = Math.hypot(a.x, a.y, a.z); if (m > 6) shake = Math.min(1, Math.max(shake, (m - 6) / 10)); }
+function recenter() { zero = haveSensor ? { r: rawRoll, p: rawPitch } : null; }
+document.getElementById("recenter").addEventListener("click", recenter);
+// desktop fallback: mouse over the stage = tilt
+addEventListener("mousemove", e => { if (haveSensor) return; rawRoll = (e.clientX / innerWidth - 0.5) * 2 * ROLL_FULL; rawPitch = (0.5 - e.clientY / innerHeight) * 2 * PITCH_FULL; zero = { r: 0, p: 0 }; });
+const dz = (v, d, full) => { const s = Math.sign(v), a = Math.abs(v); return a < d ? 0 : s * Math.min(1, (a - d) / (full - d)); };
+
+// control loop at display rate: JS one-pole smoothing + setTargetAtTime (no allocation)
+let sr = 0, sp = 0;
+function controls() {
+  if (!ctx || !zero) return;
+  let dr = rawRoll - zero.r, dp = rawPitch - zero.p; if (dp > 180) dp -= 360; if (dp < -180) dp += 360;
+  sr += 0.25 * (dz(dr, DEAD, ROLL_FULL) - sr); sp += 0.25 * (dz(dp, DEAD, PITCH_FULL) - sp);
+  roll = sr; pitch = sp;
+  const t = ctx.currentTime, n = nodes;
+  n.bend.offset.setTargetAtTime(roll * BEND_SEMIS * 100, t, 0.03);
+  const cut = CUT_MIN * Math.pow(CUT_MAX / CUT_MIN, (pitch + 1) / 2);   // exponential sweep
+  n.lp1.frequency.setTargetAtTime(cut, t, 0.03); n.lp2.frequency.setTargetAtTime(cut, t, 0.03);
+  n.lp2.Q.setTargetAtTime(1.5 + Math.max(0, pitch) * 5, t, 0.05);       // more bite as it opens
+  shake *= 0.97;                                                         // wobble decays ~1.5 s
+  n.wobAmt.gain.setTargetAtTime(shake * 1800, t, 0.05);
+  n.vibAmt.gain.setTargetAtTime(Math.abs(roll) > 0.9 ? 12 : 0, t, 0.15); // vibrato at full bend
+  readout.textContent = `BEND ${(roll * BEND_SEMIS).toFixed(1)} · CUT ${Math.round(cut)}HZ`;
+}
+
+// ---------- visuals ----------
+const cv = document.getElementById("viz"), g2 = cv.getContext("2d"), readout = document.getElementById("readout");
+let W = 0, H = 0, dpr = 1, freq, wave;
+function resize() { dpr = Math.min(2, devicePixelRatio || 1); W = cv.width = innerWidth * dpr; H = cv.height = innerHeight * dpr; }
+addEventListener("resize", resize); resize();
+function frame() {
+  requestAnimationFrame(frame);
+  controls();
+  g2.fillStyle = "rgba(11,13,18,0.35)"; g2.fillRect(0, 0, W, H); // trails
+  if (!nodes) return;
+  const an = nodes.analyser;
+  if (!freq) { freq = new Uint8Array(an.frequencyBinCount); wave = new Float32Array(an.fftSize); }
+  an.getByteFrequencyData(freq); an.getFloatTimeDomainData(wave);
+  const top = H * 0.12, bottom = H - Math.min(H * 0.34, 190 * dpr) - 20 * dpr, mid = (top + bottom) / 2, span = bottom - top;
+  // glow orb sized by low-end energy
+  let lo = 0; for (let i = 1; i < 24; i++) lo += freq[i]; lo /= 23 * 255;
+  const cx = W / 2 + roll * W * 0.18, cy = mid - pitch * span * 0.25;
+  const r = (0.12 + lo * 0.35) * Math.min(W, span);
+  const grd = g2.createRadialGradient(cx, cy, 0, cx, cy, r);
+  grd.addColorStop(0, `rgba(232,162,58,${0.18 + lo * 0.5})`); grd.addColorStop(1, "rgba(232,162,58,0)");
+  g2.fillStyle = grd; g2.beginPath(); g2.arc(cx, cy, r, 0, 7); g2.fill();
+  // log-spaced bars (20 Hz–2 kHz)
+  const bars = 48, binHz = ctx.sampleRate / an.fftSize;
+  for (let i = 0; i < bars; i++) {
+    const f = 20 * Math.pow(100, i / bars), v = freq[Math.min(freq.length - 1, Math.round(f / binHz))] / 255;
+    const bw = W / bars, h = v * v * v * span * 0.85;
+    g2.fillStyle = i < bars * 0.3 ? `rgba(232,162,58,${0.25 + v * 0.6})` : `rgba(111,143,214,${0.15 + v * 0.5})`;
+    g2.fillRect(i * bw + bw * 0.2, bottom - h, bw * 0.6, h);
+  }
+  // waveform line
+  g2.strokeStyle = "rgba(240,184,90,0.9)"; g2.lineWidth = 2 * dpr; g2.shadowColor = "#e8a23a"; g2.shadowBlur = 12 * dpr;
+  g2.beginPath(); const step = Math.max(1, Math.floor(wave.length / 512));
+  for (let i = 0, j = 0; i < wave.length; i += step, j++) { const x = (i / wave.length) * W, y = mid + wave[i] * span * 0.35; j ? g2.lineTo(x, y) : g2.moveTo(x, y); }
+  g2.stroke(); g2.shadowBlur = 0;
+}
+requestAnimationFrame(frame);
+
+// ---------- backing loop (optional; silent no-op if the file is missing) ----------
+let loopBytes = null, loopGain = null, loopOn = true;
+// prefetch bytes on page load so the beat starts right after the tap
+const loopFetch = fetch(LOOP.url, { cache: "force-cache" })
+  .then(r => (r.ok && !/text\/html/.test(r.headers.get("content-type") || "")) ? r.arrayBuffer() : null)
+  .catch(() => null);
+function startLoop() {
+  loopGain = ctx.createGain(); loopGain.gain.value = LOOP.volume; loopGain.connect(nodes.comp);
+  loopFetch.then(bytes => {
+    if (!bytes) return null;
+    return new Promise(res => { try { ctx.decodeAudioData(bytes, res, () => res(null)); } catch (_) { res(null); } });
+  }).then(buf => {
+    if (!buf) { console.info("[tilt-bass] no backing loop at", LOOP.url, "— solo mode"); return; }
+    const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;
+    if (LOOP.bpm && LOOP.bars) { src.loopStart = LOOP.offset; src.loopEnd = Math.min(buf.duration, LOOP.offset + LOOP.bars * 4 * 60 / LOOP.bpm); }
+    src.connect(loopGain); src.start(ctx.currentTime + 0.05, LOOP.offset);
+    document.getElementById("loopctl").classList.add("ready");
+  }).catch(() => {});
+}
+function applyLoopGain() { if (loopGain) loopGain.gain.setTargetAtTime(loopOn ? +document.getElementById("loopvol").value : 0, ctx.currentTime, 0.05); }
+document.getElementById("loopbtn").addEventListener("click", e => { loopOn = !loopOn; e.currentTarget.setAttribute("aria-pressed", loopOn); applyLoopGain(); });
+document.getElementById("loopvol").addEventListener("input", () => { if (!loopOn) { loopOn = true; document.getElementById("loopbtn").setAttribute("aria-pressed", true); } applyLoopGain(); });
+
+// ---------- start: one tap unlocks audio + asks for motion ----------
+document.getElementById("go").addEventListener("click", () => {
+  // 1) iOS: route Web Audio to the media channel so the ringer switch doesn't mute it (Safari 16.4+/iOS 17)
+  try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch (_) {}
+  // 2) create + resume the context synchronously inside the gesture
+  if (!ctx) { buildGraph(); startLoop(); } ctx.resume();
+  // 3) ask for motion permission in the SAME gesture, before any await (iOS 13+)
+  const msg = document.getElementById("msg");
+  const listen = () => { addEventListener("deviceorientation", onOrient); addEventListener("devicemotion", onMotion); };
+  const DOE = window.DeviceOrientationEvent, DME = window.DeviceMotionEvent;
+  const done = () => { document.getElementById("start").remove(); setTimeout(() => { if (!haveSensor) document.getElementById("note").textContent = "NO MOTION SENSOR · MOUSE = TILT · KEYS A S D F · SPACE = WOBBLE"; }, 800); };
+  if (DOE && typeof DOE.requestPermission === "function") {
+    const pO = DOE.requestPermission(), pM = (DME && typeof DME.requestPermission === "function") ? DME.requestPermission() : Promise.resolve("granted");
+    Promise.all([pO, pM]).then(([o, m]) => { if (o === "granted") listen(); else msg.textContent = "Motion off. Keys still play."; if (m === "granted") addEventListener("devicemotion", onMotion); done(); })
+      .catch(() => { msg.textContent = "Motion unavailable. Keys still play."; done(); });
+  } else { listen(); done(); }
+});
+document.addEventListener("visibilitychange", () => { if (!ctx) return; if (document.hidden) ctx.suspend(); else ctx.resume(); });
+</script>
+</body>
+</html>

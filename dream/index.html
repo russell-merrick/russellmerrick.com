@@ -1,0 +1,639 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0b0d12">
+<title>Russell Merrick — Dream</title>
+<meta name="description" content="A drifting dream landscape you steer by tilting your phone. Music, Nandland, and projects inside.">
+<meta name="author" content="Russell Merrick">
+<link rel="canonical" href="https://russellmerrick.com/dream/">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Russell Merrick">
+<meta property="og:title" content="Russell Merrick — Dream">
+<meta property="og:description" content="Tilt to drift through an endless sunrise.">
+<meta property="og:url" content="https://russellmerrick.com/dream/">
+<meta property="og:image" content="https://russellmerrick.com/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+@font-face{font-family:"IBM Plex Sans";font-weight:500;font-display:swap;src:url(../fonts/ibm-plex-sans-500.woff2) format("woff2")}
+@font-face{font-family:"IBM Plex Mono";font-weight:400;font-display:swap;src:url(../fonts/ibm-plex-mono-400.woff2) format("woff2")}
+:root{--bg:#0b0d12;--elev:#14161c;--border:#2a2f3a;--text:#e8eaef;--dim:#9aa1b3;--accent:#e8a23a;--glow:rgba(232,162,58,.35)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:"IBM Plex Sans",system-ui,sans-serif;overflow:hidden;overscroll-behavior:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:crosshair;background:#0b0d12}
+#nogl{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:32px;text-align:center;color:var(--dim);font:400 14px/1.6 "IBM Plex Sans",sans-serif}#nogl a{color:var(--accent)}#nogl[hidden]{display:none}
+#hud{position:fixed;top:0;left:0;right:0;padding:max(12px,env(safe-area-inset-top)) 16px 22px;display:flex;justify-content:space-between;align-items:center;gap:8px;white-space:nowrap;font:400 11px/1.4 "IBM Plex Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);pointer-events:none;background:linear-gradient(180deg,rgba(11,13,18,.72),rgba(11,13,18,0))}
+#hud b{color:var(--accent);font-weight:400}
+#hud .right{display:flex;gap:8px;align-items:center;pointer-events:auto}
+.chip{background:rgba(11,13,18,.35);border:1px solid var(--border);color:var(--dim);font:inherit;letter-spacing:inherit;text-transform:inherit;padding:4px 8px;border-radius:6px;text-decoration:none;cursor:pointer;line-height:1.4}
+.chip:hover,.chip:focus-visible{color:var(--text);border-color:#3a4150;outline:none}
+.chip.accent{color:var(--accent);border-color:rgba(232,162,58,.5)}
+.chip.accent:hover,.chip.accent:focus-visible{background:var(--accent);color:#1a1308}
+.chip[aria-pressed="false"]{opacity:.55;text-decoration:line-through}
+/* experience switcher: add future experiences as more <a> entries */
+.exps{display:flex;border:1px solid var(--border);border-radius:6px;overflow:hidden;background:rgba(11,13,18,.35)}
+.exps a{color:var(--dim);text-decoration:none;padding:4px 8px;line-height:1.4}
+.exps a+a{border-left:1px solid var(--border)}
+.exps a:hover,.exps a:focus-visible{color:var(--text);outline:none}
+.exps a[aria-current="page"]{color:#1a1308;background:var(--accent)}
+#bar{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:space-between;align-items:flex-end;gap:10px;padding:26px max(16px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));font:400 11px/1.5 "IBM Plex Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);pointer-events:none;background:linear-gradient(0deg,rgba(11,13,18,.6),rgba(11,13,18,0))}
+#bar .tools{display:flex;gap:8px;pointer-events:auto}
+#note{max-width:64ch}
+@media (max-width:560px){#hud .long,#readout{display:none}#bar{flex-direction:column;align-items:stretch}#note{font-size:9.5px;letter-spacing:.08em;text-align:center;max-width:none}#bar .tools{justify-content:center}}
+@media (min-width:561px){#hud .short{display:none}#note{white-space:nowrap}}
+#start{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:radial-gradient(ellipse 55% 42% at 50% 48%,rgba(11,13,18,.82),rgba(11,13,18,.35) 72%,rgba(11,13,18,.1));z-index:5;text-align:center;padding:24px}
+#start h1{margin:0;font-weight:500;font-size:clamp(30px,7vw,52px);letter-spacing:-.01em;text-shadow:0 2px 30px rgba(0,0,0,.6)}
+#start p{margin:0;color:#c5cad6;font:400 12px/1.7 "IBM Plex Mono",monospace;letter-spacing:.12em;text-transform:uppercase;max-width:36ch;text-shadow:0 1px 12px rgba(0,0,0,.8)}
+#go{appearance:none;border:0;border-radius:999px;background:var(--accent);color:#1a1308;font:500 16px "IBM Plex Sans",sans-serif;padding:16px 34px;box-shadow:0 0 40px -6px var(--glow);cursor:pointer}
+#skip{color:var(--dim);font:400 11px "IBM Plex Mono",monospace;letter-spacing:.14em;text-transform:uppercase;text-decoration:none;border-bottom:1px solid var(--border);padding-bottom:2px}
+#skip:hover{color:var(--accent)}
+#start .alt{color:var(--dim);font:400 11px "IBM Plex Mono",monospace;letter-spacing:.14em;text-transform:uppercase}
+#start .alt a{color:var(--dim);text-decoration:none;border-bottom:1px solid var(--border)}
+@media (max-width:420px){.exps a{padding:4px 6px;letter-spacing:.06em}#hud .right{gap:6px}}
+</style>
+</head>
+<body>
+<canvas id="gl" aria-label="Dream landscape. Tilt to steer, drag to look, tap to release a lantern."></canvas>
+<div id="hud"><span><span class="long">RUSSELL MERRICK / </span><b class="long">DREAM</b></span><span id="readout">HDG 000° · ALT 0</span>
+  <span class="right">
+    <nav class="exps" aria-label="Experiences"><a href="../">BASS</a><a href="../garden/">GARDEN</a><a href="./" aria-current="page">DREAM</a><a href="../nebula/">NEBULA</a></nav>
+    <button id="recenter" class="chip" title="Make the current angle level"><span class="long">RECENTER</span><span class="short">⟲</span></button>
+    <a class="chip accent" href="../about/"><span class="long">ENTER SITE →</span><span class="short">SITE →</span></a>
+  </span></div>
+<div id="bar">
+  <span id="note">TILT = STEER &amp; CLIMB · DRAG = LOOK · TAP = LANTERN · HOLD = DRIFT FASTER</span>
+  <span class="tools">
+    <button id="sound" class="chip" aria-pressed="true" title="Ambient sound on/off">SOUND</button>
+  </span>
+</div>
+<div id="start">
+  <h1>Dream</h1>
+  <p>Drift over a landscape that never ends. Tilt to steer and climb. Tap the floating forms. Hold to drift faster. Sound is soft and optional.</p>
+  <button id="go">Tap to start</button>
+  <p id="msg" style="text-transform:none;letter-spacing:.04em"></p>
+  <a id="skip" href="../about/">Skip to site →</a>
+  <span class="alt">or try the <a href="../">tilt bass</a> · <a href="../garden/">sand garden</a> · <a href="../nebula/">nebula</a></span>
+</div>
+<div id="nogl" hidden>This one needs WebGL, which this browser has turned off. Try the <a href="../garden/">sand garden</a> or <a href="../about/">enter the site</a>.</div>
+<script>
+"use strict";
+// ================= config =================
+const FOV = 62, SPEED = 5.5, BOOST = 3.2, TURN = 34, CLIMB = 9;   // deg, units/s, x, deg/s at full tilt, units/s
+const DEAD = 3, FULL = 30;                                          // tilt deadzone / full scale (deg)
+const GRID_N = 120, GRID_HALF = 125, GRID_AHEAD = 100;              // terrain mesh: cells, half size, forward offset
+const FOG_END = 112, WATER = 2.0, FORMS = 22, MAX_LANTERNS = 14;
+const DPR_CAP = 2;
+const D2R = Math.PI / 180, R2D = 180 / Math.PI, TAU = Math.PI * 2;
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const lerp = (a, b, t) => a + (b - a) * t;
+const params = new URLSearchParams(location.search);
+const coarse = matchMedia("(pointer:coarse)").matches;
+
+// ================= terrain function (mirrors the GLSL exactly, used for flight height + spawning) =================
+const fract = x => x - Math.floor(x);
+function hash2(x, y) {
+  let a = fract(x * 0.1031), b = fract(y * 0.1031), c = fract(x * 0.1031);
+  const d = a * (b + 33.33) + b * (c + 33.33) + c * (a + 33.33);
+  a += d; b += d; c += d;
+  return fract((a + b) * c);
+}
+function vnoise(x, y) {
+  const ix = Math.floor(x), iy = Math.floor(y), fx = x - ix, fy = y - iy;
+  const ux = fx * fx * (3 - 2 * fx), uy = fy * fy * (3 - 2 * fy);
+  return lerp(lerp(hash2(ix, iy), hash2(ix + 1, iy), ux), lerp(hash2(ix, iy + 1), hash2(ix + 1, iy + 1), ux), uy);
+}
+function terrain(x, y) {
+  let h = 0, a = 1, qx = x * 0.018, qy = y * 0.018;
+  for (let k = 0; k < 4; k++) { h += a * vnoise(qx, qy); const nx = qx * 2.03 + 17.1, ny = qy * 2.03 + 9.2; qx = nx; qy = ny; a *= 0.5; }
+  h /= 1.875;
+  return Math.pow(h, 1.6) * 34 - 3;
+}
+
+// ================= GLSL =================
+const GLSL_COMMON = `
+float hash(vec2 p){ vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
+float vnoise(vec2 p){ vec2 i = floor(p), f = p - i; vec2 u = f * f * (3.0 - 2.0 * f);
+  return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), u.x), mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y); }
+uniform vec3 uSun; uniform float uTime; uniform float uWarm; uniform float uPulse;
+// the dream sky: deep navy zenith -> violet -> amber/rose horizon, haze below the horizon
+vec3 haze(vec3 d){
+  float y = d.y;
+  vec3 zen = vec3(0.035, 0.045, 0.10), mid = vec3(0.20, 0.12, 0.28);
+  vec3 hor = mix(vec3(0.98, 0.56, 0.28), vec3(0.95, 0.42, 0.42), uWarm);
+  vec3 low = vec3(0.16, 0.10, 0.20);
+  vec3 c = mix(hor, mid, smoothstep(0.0, 0.22, y));
+  c = mix(c, zen, smoothstep(0.18, 0.75, y));
+  c = mix(c, mix(hor, low, smoothstep(0.0, 0.35, -y)), step(y, 0.0));
+  float s = max(dot(d, uSun), 0.0);
+  c += vec3(1.0, 0.55, 0.25) * (pow(s, 6.0) * 0.35 + pow(s, 40.0) * 0.5) * (1.0 + uPulse);
+  c += vec3(0.9, 0.35, 0.6) * uPulse * 0.25 * (1.0 - abs(y));
+  return c;
+}`;
+const VS_SKY = `attribute vec2 aPos; varying vec2 vUv; void main(){ vUv = aPos; gl_Position = vec4(aPos, 1.0, 1.0); }`;
+const FS_SKY = (hp) => `precision ${hp} float;
+varying vec2 vUv; uniform vec3 uR, uU, uF; uniform vec2 uTan; uniform vec3 uPlanet;
+${GLSL_COMMON}
+void main(){
+  vec3 d = normalize(uF + vUv.x * uTan.x * uR + vUv.y * uTan.y * uU);
+  vec3 c = haze(d);
+  float y = d.y;
+  // stars
+  if (y > 0.04) {
+    vec2 sp = vec2(atan(d.x, d.z), asin(y)) * 70.0;
+    vec2 cell = floor(sp); float h = hash(cell);
+    if (h > 0.975) { vec2 o = fract(sp) - 0.5 - (vec2(hash(cell + 3.1), hash(cell + 7.7)) - 0.5) * 0.6;
+      float tw = 0.6 + 0.4 * sin(uTime * (1.0 + h * 3.0) + h * 40.0);
+      c += vec3(1.0, 0.92, 0.8) * smoothstep(0.12, 0.0, length(o)) * smoothstep(0.04, 0.4, y) * tw * (h - 0.975) * 40.0; }
+  }
+  // soft cloud bands lit from below by the sun
+  float az = atan(d.x, d.z);
+  vec2 cp = vec2(az * 2.6 + uTime * 0.004, y * 16.0);
+  float cl = vnoise(cp) * 0.6 + vnoise(cp * 2.1 + 5.0) * 0.3 + vnoise(cp * 4.3 + 9.0) * 0.1;
+  cl = smoothstep(0.52, 0.85, cl) * smoothstep(0.015, 0.06, y) * smoothstep(0.32, 0.1, y);
+  float sd = max(dot(d, uSun), 0.0);
+  c = mix(c, mix(vec3(0.42, 0.24, 0.38), vec3(1.0, 0.62, 0.42), pow(sd, 3.0)), cl * 0.55);
+  // retro striped sun
+  float R = 0.105; vec3 toS = d - uSun; float r = length(toS);
+  if (r < R) {
+    float v = (d.y - uSun.y) / R;
+    vec3 sc = mix(vec3(1.0, 0.35, 0.38), vec3(1.0, 0.86, 0.48), smoothstep(-1.0, 0.8, v));
+    float cut = v < 0.0 ? step(fract(-v * 4.5 + uTime * 0.05), clamp(-v * 0.75, 0.0, 0.6)) : 0.0;
+    c = mix(c, sc, smoothstep(R, R * 0.96, r) * (1.0 - cut));
+  }
+  // pale ringed planet hanging opposite the sun
+  vec3 tp = d - uPlanet; float pr = length(tp), PR = 0.16;
+  vec3 pc = c;
+  if (pr < PR) { float sh = clamp(dot(normalize(tp), -uSun) * 0.5 + 0.55, 0.0, 1.0);
+    float bands = 0.5 + 0.5 * sin((d.y - uPlanet.y) * 90.0);
+    pc = mix(vec3(0.25, 0.22, 0.38), vec3(0.95, 0.78, 0.66) - bands * 0.06, sh * 0.85);
+    c = mix(c, pc, smoothstep(PR, PR * 0.97, pr) * 0.92); }
+  vec3 rr = d - uPlanet; vec2 rl = vec2(dot(rr, normalize(cross(uPlanet, vec3(0.0, 1.0, 0.0)))), rr.y - dot(rr, vec3(0.0)) );
+  float re = length(vec2(rl.x, (rl.y + rl.x * 0.25) * 4.0));
+  float ring = smoothstep(0.012, 0.0, abs(re - PR * 1.55)) * 0.55 + smoothstep(0.02, 0.0, abs(re - PR * 1.75)) * 0.3;
+  float front = step(0.0, -(rl.y + rl.x * 0.25)) + step(PR, pr);
+  c += vec3(1.0, 0.72, 0.5) * ring * clamp(front, 0.0, 1.0) * 0.7 * smoothstep(0.9, 0.95, dot(d, uPlanet));
+  gl_FragColor = vec4(c, 1.0);
+}`;
+const VS_TER = `precision highp float;
+attribute vec2 aGrid; uniform vec2 uCenter; uniform float uSize; uniform mat4 uVP;
+varying vec3 vWorld; varying vec3 vN; varying float vDepth;
+float hash(vec2 p){ vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
+float vnoise(vec2 p){ vec2 i = floor(p), f = p - i; vec2 u = f * f * (3.0 - 2.0 * f);
+  return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), u.x), mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y); }
+float terrain(vec2 p){ float h = 0.0, a = 1.0; vec2 q = p * 0.018;
+  for (int k = 0; k < 4; k++) { h += a * vnoise(q); q = q * 2.03 + vec2(17.1, 9.2); a *= 0.5; }
+  h /= 1.875; return pow(h, 1.6) * 34.0 - 3.0; }
+void main(){
+  vec2 wp = uCenter + (aGrid - 0.5) * uSize;
+  float h = terrain(wp), e = 1.2;
+  vN = normalize(vec3(h - terrain(wp + vec2(e, 0.0)), e, h - terrain(wp + vec2(0.0, e))));
+  vDepth = ${WATER.toFixed(2)} - h;
+  vWorld = vec3(wp.x, max(h, ${WATER.toFixed(2)}), wp.y);
+  gl_Position = uVP * vec4(vWorld, 1.0);
+}`;
+const FS_TER = (hp, deriv) => `${deriv ? "#extension GL_OES_standard_derivatives : enable\n#define DERIV 1" : ""}
+precision ${hp} float;
+varying vec3 vWorld; varying vec3 vN; varying float vDepth; uniform vec3 uCam;
+${GLSL_COMMON}
+void main(){
+  vec3 V = vWorld - uCam; float dist = length(V); vec3 vd = V / dist;
+  vec3 c;
+  if (vDepth > 0.0) {
+    // mirror lake: rippled reflection of the dream sky + sun glitter
+    vec2 rp = vWorld.xz * 0.45 + uTime * vec2(0.35, 0.22);
+    vec3 n = normalize(vec3((vnoise(rp) - 0.5) * 0.16, 1.0, (vnoise(rp + 7.3) - 0.5) * 0.16));
+    vec3 r = reflect(vd, n); r.y = abs(r.y);
+    c = haze(r) * 0.82;
+    float g = pow(max(dot(r, uSun), 0.0), 220.0);
+    c += vec3(1.0, 0.75, 0.45) * g * 2.2;
+    c = mix(c, vec3(0.05, 0.05, 0.12), clamp(vDepth * 0.08, 0.0, 0.5) * 0.5);
+    c += vec3(1.0, 0.6, 0.3) * exp(-vDepth * 5.0) * 0.35; // glowing shoreline
+  } else {
+    vec3 n = normalize(vN);
+    float dif = max(dot(n, uSun), 0.0);
+    float hgt = clamp((vWorld.y - 2.0) / 26.0, 0.0, 1.0);
+    vec3 base = mix(vec3(0.08, 0.07, 0.15), vec3(0.30, 0.17, 0.30), hgt);
+    c = base * (0.55 + 0.45 * n.y) + vec3(1.0, 0.55, 0.28) * pow(dif, 1.5) * 0.85 + vec3(0.25, 0.2, 0.45) * (1.0 - n.y) * 0.25;
+    // rim glow on ridges facing the sun
+    c += vec3(1.0, 0.6, 0.3) * pow(1.0 - max(dot(n, -vd), 0.0), 3.0) * dif * 0.6;
+#ifdef DERIV
+    vec2 gq = vWorld.xz / 7.0; vec2 gw = fwidth(gq);
+    vec2 gl = abs(fract(gq - 0.5) - 0.5) / max(gw, 1e-4);
+    float line = (1.0 - min(min(gl.x, gl.y), 1.0)) * exp(-dist * 0.028) * smoothstep(1.4, 0.25, max(gw.x, gw.y));
+    c += vec3(1.0, 0.62, 0.25) * line * 0.55;
+#endif
+  }
+  float f = 1.0 - exp(-pow(dist / 70.0, 2.0));
+  f = max(f, smoothstep(${(FOG_END - 22).toFixed(1)}, ${FOG_END.toFixed(1)}, dist));
+  gl_FragColor = vec4(mix(c, haze(vd), f), 1.0);
+}`;
+const VS_BB = `precision highp float;
+attribute vec2 aCorner; uniform vec3 uPos; uniform vec2 uSize; uniform vec3 uRb, uUb; uniform mat4 uVP; varying vec2 vC;
+void main(){ vC = aCorner; vec3 w = uPos + uRb * aCorner.x * uSize.x + uUb * aCorner.y * uSize.y; gl_Position = uVP * vec4(w, 1.0); }`;
+const FS_BB = (hp) => `precision ${hp} float;
+varying vec2 vC; uniform int uType; uniform float uFog, uAlpha, uBloom, uSeed; uniform vec3 uViewDir, uSunV;
+${GLSL_COMMON}
+void main(){
+  vec2 c = vC; float a = 0.0; vec3 col = vec3(0.0);
+  if (uType == 0 || uType == 3) {
+    // orb (0) or lantern (3): sphere radius 0.62 of the quad, soft halo outside
+    float r = length(c) / 0.62;
+    float emis = uType == 3 ? 1.0 : 0.25 + uBloom;
+    if (r < 1.0) {
+      vec3 n = vec3(c / 0.62, sqrt(1.0 - r * r));
+      float dif = max(dot(n, uSunV), 0.0), fr = pow(1.0 - n.z, 2.5);
+      vec3 body = uType == 3 ? mix(vec3(1.0, 0.82, 0.5), vec3(1.0, 0.5, 0.25), r * r)
+        : mix(vec3(0.18, 0.12, 0.28), vec3(0.95, 0.62, 0.42), dif) + fr * mix(vec3(1.0, 0.55, 0.3), vec3(0.6, 0.45, 1.0), uSeed);
+      col = body + vec3(1.0, 0.7, 0.4) * uBloom * 0.6; a = 1.0;
+    } else {
+      float g = exp(-(r - 1.0) * (uType == 3 ? 3.0 : 6.0)) * emis * smoothstep(1.6, 1.15, r);
+      col = mix(vec3(1.0, 0.62, 0.3), vec3(1.0, 0.45, 0.6), uSeed * 0.6); a = g * 0.6;
+    }
+  } else if (uType == 1) {
+    // ring: iridescent annulus
+    float r = length(c), ang = atan(c.y, c.x);
+    float band = smoothstep(0.50, 0.56, r) * smoothstep(0.86, 0.80, r);
+    float sh = 0.55 + 0.45 * cos(ang - 2.2);
+    vec3 ir = 0.5 + 0.5 * cos(vec3(0.0, 0.9, 2.0) + ang * 1.0 + uTime * 0.3 + uSeed * 6.0);
+    col = mix(vec3(0.95, 0.6, 0.35), ir, 0.35) * sh + vec3(1.0, 0.7, 0.45) * uBloom;
+    float halo = exp(-abs(r - 0.68) * 9.0) * (0.25 + uBloom);
+    a = max(band, halo * 0.5);
+  } else {
+    // monolith: tall dark glass slab with a glowing seam
+    vec2 q = abs(c) - vec2(0.42, 0.97);
+    float inside = step(max(q.x, q.y), 0.0);
+    float seam = exp(-abs(c.y - 0.15 + sin(uTime * 0.4 + uSeed * 6.0) * 0.4) * 40.0) * inside;
+    float edge = exp(-abs(max(q.x, q.y)) * 40.0);
+    col = mix(vec3(0.05, 0.05, 0.10), vec3(0.18, 0.12, 0.26), c.x * 0.5 + 0.5) + vec3(1.0, 0.6, 0.3) * (seam * (0.8 + uBloom * 2.0) + edge * 0.6);
+    a = max(inside, edge * 0.7);
+  }
+  col = mix(col, haze(uViewDir), uFog);
+  a *= uAlpha;
+  if (a < 0.01) discard;
+  gl_FragColor = vec4(col * a, a);
+}`;
+
+// ================= GL setup =================
+const cv = document.getElementById("gl");
+const gl = cv.getContext("webgl", { antialias: false, alpha: false, depth: true, powerPreference: "high-performance", preserveDrawingBuffer: false });
+let progSky, progTer, progBB, bufSky, bufGrid, bufIdx, bufQuad, idxCount = 0, hp = "mediump", deriv = false;
+function compile(type, src) { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s) + "\n" + src.split("\n").map((l, i) => (i + 1) + ": " + l).join("\n")); return s; }
+function program(vs, fs) {
+  const p = gl.createProgram(); gl.attachShader(p, compile(gl.VERTEX_SHADER, vs)); gl.attachShader(p, compile(gl.FRAGMENT_SHADER, fs)); gl.linkProgram(p);
+  if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
+  const u = {}; const n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS); for (let i = 0; i < n; i++) { const nm = gl.getActiveUniform(p, i).name; u[nm] = gl.getUniformLocation(p, nm); }
+  return { p, u, a: (name) => gl.getAttribLocation(p, name) };
+}
+function initGL() {
+  const f = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.HIGH_FLOAT); hp = f && f.precision > 0 ? "highp" : "mediump";
+  deriv = !!gl.getExtension("OES_standard_derivatives");
+  progSky = program(VS_SKY, FS_SKY(hp)); progTer = program(VS_TER, FS_TER(hp, deriv)); progBB = program(VS_BB, FS_BB(hp));
+  bufSky = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, bufSky); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  bufQuad = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, bufQuad); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+  const n = GRID_N + 1, verts = new Float32Array(n * n * 2);
+  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { verts[(y * n + x) * 2] = x / GRID_N; verts[(y * n + x) * 2 + 1] = y / GRID_N; }
+  const idx = new Uint16Array(GRID_N * GRID_N * 6); let k = 0;
+  for (let y = 0; y < GRID_N; y++) for (let x = 0; x < GRID_N; x++) { const i = y * n + x; idx[k++] = i; idx[k++] = i + n; idx[k++] = i + 1; idx[k++] = i + 1; idx[k++] = i + n; idx[k++] = i + n + 1; }
+  bufGrid = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, bufGrid); gl.bufferData(gl.ARRAY_BUFFER, verts, gl.STATIC_DRAW);
+  bufIdx = gl.createBuffer(); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, bufIdx); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, idx, gl.STATIC_DRAW); idxCount = k;
+}
+
+// ================= resolution (adaptive) =================
+let scale = params.has("scale") ? clamp(+params.get("scale"), 0.3, 1) : (coarse ? 0.8 : 1), lockScale = params.has("scale");
+let cssW = 0, cssH = 0, dpr = 1;
+function resize() {
+  cssW = innerWidth; cssH = innerHeight; dpr = Math.min(DPR_CAP, devicePixelRatio || 1);
+  // phones: cap total pixels (~1.6 MP) so the fragment work stays light; adaptive scale on top
+  const cap = Math.sqrt(1.6e6 / (cssW * cssH * dpr * dpr)), k = dpr * Math.min(1, cap) * scale;
+  cv.width = Math.max(2, Math.round(cssW * k)); cv.height = Math.max(2, Math.round(cssH * k));
+}
+addEventListener("resize", resize);
+
+// ================= math =================
+function persp(fovy, asp, n, f) { const t = 1 / Math.tan(fovy / 2), nf = 1 / (n - f); return new Float32Array([t / asp, 0, 0, 0, 0, t, 0, 0, 0, 0, (f + n) * nf, -1, 0, 0, 2 * f * n * nf, 0]); }
+function mul(a, b) { const o = new Float32Array(16); for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) { let s = 0; for (let k = 0; k < 4; k++) s += a[k * 4 + r] * b[c * 4 + k]; o[c * 4 + r] = s; } return o; }
+const norm = v => { const l = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / l, v[1] / l, v[2] / l]; };
+const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+
+// ================= flight state =================
+const cam = { x: 0, y: 20, z: 0, yaw: 0, pitch: -0.06, bank: 0, altOff: 6, speed: SPEED };
+let lookYaw = 0, lookPitch = 0, boost = 0, boostHeld = false, started = false;
+let basis = { R: [1, 0, 0], U: [0, 1, 0], F: [0, 0, -1] }, VP = null, tanY = Math.tan((innerWidth < innerHeight ? FOV + 14 : FOV) * D2R / 2), tanX = tanY * innerWidth / innerHeight;
+const sunAz = 0; let sunEl = 0.07;
+
+// ================= tilt input =================
+let rawRoll = 0, rawPitch = 0, zero = null, haveSensor = false, tiltX = 0, tiltY = 0, mouseTX = 0, mouseTY = 0, kb = { x: 0, y: 0 };
+function screenAngle() { return (screen.orientation && screen.orientation.angle) ?? (window.orientation || 0); }
+function onOrient(e) {
+  if (e.beta == null) return; haveSensor = true;
+  const b = e.beta * D2R, gm = e.gamma * D2R;
+  const ux = -Math.cos(b) * Math.sin(gm), uy = Math.sin(b), uz = Math.cos(b) * Math.cos(gm);
+  const a = screenAngle() * D2R;
+  const ssx = ux * Math.cos(a) + uy * Math.sin(a), ssy = -ux * Math.sin(a) + uy * Math.cos(a);
+  rawRoll = Math.asin(clamp(-ssx, -1, 1)) * R2D;  // right edge down = +
+  rawPitch = Math.atan2(uz, ssy) * R2D;           // top edge away = +
+  if (!zero) zero = { r: rawRoll, p: rawPitch };
+}
+function recenter() { zero = haveSensor ? { r: rawRoll, p: rawPitch } : null; lookYaw = lookPitch = 0; }
+document.getElementById("recenter").addEventListener("click", recenter);
+const dz = v => { const s = Math.sign(v), a = Math.abs(v); return a < DEAD ? 0 : s * Math.min(1, (a - DEAD) / (FULL - DEAD)); };
+function updateTilt(dt) {
+  let tx = 0, ty = 0;
+  if (haveSensor && zero) {
+    let dr = rawRoll - zero.r, dp = rawPitch - zero.p; if (dp > 180) dp -= 360; if (dp < -180) dp += 360;
+    tx = dz(dr); ty = dz(dp);                       // ty > 0: top edge away = nose down
+  } else if (started) { tx = clamp(mouseTX + kb.x, -1, 1); ty = clamp(mouseTY + kb.y, -1, 1); }
+  const k = 1 - Math.exp(-dt * 6); tiltX += (tx - tiltX) * k; tiltY += (ty - tiltY) * k;
+}
+// desktop: mouse position steers (centre 12% is neutral); arrows / WASD too
+const mdz = v => Math.abs(v) < 0.12 ? 0 : Math.sign(v) * (Math.abs(v) - 0.12) / 0.88;
+addEventListener("mousemove", e => { if (haveSensor || dragging) return; mouseTX = mdz((e.clientX / innerWidth - 0.5) * 2); mouseTY = mdz((e.clientY / innerHeight - 0.5) * 2); });
+document.addEventListener("mouseleave", () => { mouseTX = mouseTY = 0; });
+const KT = { ArrowLeft: [-1, 0], KeyA: [-1, 0], ArrowRight: [1, 0], KeyD: [1, 0], ArrowUp: [0, 1], KeyW: [0, 1], ArrowDown: [0, -1], KeyS: [0, -1] };
+const kdown = new Set();
+function kbUpdate() { kb.x = 0; kb.y = 0; for (const c of kdown) { kb.x += KT[c][0]; kb.y += KT[c][1]; } }
+addEventListener("keydown", e => {
+  if (e.code in KT) { kdown.add(e.code); kbUpdate(); e.preventDefault(); }
+  else if (e.code === "Space") { boostHeld = true; e.preventDefault(); }
+  else if (e.code === "KeyM" && !e.repeat) toggleSound();
+});
+addEventListener("keyup", e => { if (e.code in KT) { kdown.delete(e.code); kbUpdate(); } if (e.code === "Space") boostHeld = false; });
+addEventListener("blur", () => { kdown.clear(); kbUpdate(); boostHeld = false; });
+
+// ================= touch: drag = look, tap = lantern / bloom, hold = drift faster =================
+const ptrs = new Map(); let dragging = false;
+cv.addEventListener("pointerdown", e => {
+  if (!started) return;
+  cv.setPointerCapture(e.pointerId);
+  const p = { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, t0: performance.now(), moved: 0, hold: false };
+  p.timer = setTimeout(() => { if (p.moved < 10) { p.hold = true; boostHeld = true; whoosh(); } }, 330);
+  ptrs.set(e.pointerId, p);
+});
+cv.addEventListener("pointermove", e => {
+  const p = ptrs.get(e.pointerId); if (!p) return;
+  const dx = e.clientX - p.x, dy = e.clientY - p.y; p.x = e.clientX; p.y = e.clientY; p.moved += Math.hypot(dx, dy);
+  if (p.moved > 10 && !p.hold) { dragging = true; const k = FOV * D2R / cssH * 1.1; lookYaw = clamp(lookYaw - dx * k, -0.9, 0.9); lookPitch = clamp(lookPitch + dy * k, -0.5, 0.6); }
+});
+const endPtr = e => {
+  const p = ptrs.get(e.pointerId); if (!p) return; ptrs.delete(e.pointerId); clearTimeout(p.timer);
+  if (p.hold) { if (![...ptrs.values()].some(q => q.hold)) boostHeld = false; }
+  else if (p.moved < 10 && e.type === "pointerup") tapAt(e.clientX, e.clientY);
+  if (!ptrs.size) dragging = false;
+};
+cv.addEventListener("pointerup", endPtr); cv.addEventListener("pointercancel", endPtr);
+cv.addEventListener("contextmenu", e => e.preventDefault());
+
+function rayFrom(px, py) {
+  const nx = (px / cssW) * 2 - 1, ny = 1 - (py / cssH) * 2, { R, U, F } = basis;
+  return norm([F[0] + nx * tanX * R[0] + ny * tanY * U[0], F[1] + nx * tanX * R[1] + ny * tanY * U[1], F[2] + nx * tanX * R[2] + ny * tanY * U[2]]);
+}
+function tapAt(px, py) {
+  const d = rayFrom(px, py); let best = null, bt = 1e9;
+  for (const o of forms) {
+    const v = [o.x - cam.x, o.y - cam.y, o.z - cam.z], t = dot(v, d); if (t < 0 || t > FOG_END) continue;
+    const miss = Math.hypot(v[0] - d[0] * t, v[1] - d[1] * t, v[2] - d[2] * t);
+    if (miss < o.size * 1.15 && t < bt) { bt = t; best = o; }
+  }
+  if (best) { best.bloom = 1; pulse = Math.min(1, pulse + 0.6); bloomChord(best); return; }
+  // lanterns drift forward with you on the breeze, then slowly fall behind as they rise
+  const t = 20; lanterns.push({ x: cam.x + d[0] * t, y: cam.y + d[1] * t, z: cam.z + d[2] * t, vx: Math.sin(cam.yaw) * cam.speed * 0.85, vz: -Math.cos(cam.yaw) * cam.speed * 0.85, age: 0, life: 26, seed: Math.random() });
+  if (lanterns.length > MAX_LANTERNS) lanterns.shift();
+  chime(1, 0.9);
+}
+
+// ================= floating forms =================
+const forms = []; const lanterns = []; let pulse = 0;
+const rnd = Math.random;
+function spawnForm(o, near) {
+  const spread = Math.min(1.9, Math.atan(tanX) * 2.6), ang = cam.yaw + lookYaw + (rnd() - 0.5) * spread, dist = near ? 28 + rnd() * 80 : 95 + rnd() * 15;
+  o.x = cam.x + Math.sin(ang) * dist; o.z = cam.z - Math.cos(ang) * dist;
+  const r = rnd(); o.type = r < 0.5 ? 0 : r < 0.78 ? 1 : 2;
+  o.size = o.type === 2 ? 2.2 + rnd() * 2.5 : o.type === 1 ? 2.5 + rnd() * 3.5 : 1.2 + rnd() * 3.2;
+  o.base = Math.max(terrain(o.x, o.z), WATER) + (o.type === 2 ? o.size * 2.2 + rnd() * 6 : 6 + rnd() * 18);
+  o.phase = rnd() * TAU; o.seed = rnd(); o.bloom = 0; o.age = near ? 3 : 0; o.y = o.base;
+  return o;
+}
+for (let i = 0; i < FORMS; i++) forms.push(spawnForm({}, true));
+
+// ================= simulation =================
+let simT = 0, lastT = performance.now(), warm = 0;
+function step(dt) {
+  simT += dt; updateTilt(dt);
+  // steering: roll turns + banks; pitch climbs / dives and nudges the view
+  cam.yaw += tiltX * TURN * D2R * dt;
+  cam.bank += (tiltX * 14 * D2R - cam.bank) * (1 - Math.exp(-dt * 4));
+  cam.altOff = clamp(cam.altOff - tiltY * CLIMB * dt, 2.5, 34);
+  const boostT = boostHeld ? 1 : 0; boost += (boostT - boost) * (1 - Math.exp(-dt * 2.5));
+  cam.speed = SPEED * (1 + boost * (BOOST - 1)) * (started ? 1 : 0.55);
+  const fx = Math.sin(cam.yaw), fz = -Math.cos(cam.yaw);
+  cam.x += fx * cam.speed * dt; cam.z += fz * cam.speed * dt;
+  // follow the ground, looking ahead so hills are cleared smoothly
+  let g = -1e9; for (const a of [0, 8, 16, 26]) g = Math.max(g, terrain(cam.x + fx * a, cam.z + fz * a));
+  g = Math.max(g, WATER);
+  const ty = g + cam.altOff;
+  cam.y += (ty - cam.y) * (1 - Math.exp(-dt * 1.3));
+  cam.y = Math.max(cam.y, Math.max(terrain(cam.x, cam.z), WATER) + 1.8);
+  cam.pitch += ((-0.07 - tiltY * 0.16) - cam.pitch) * (1 - Math.exp(-dt * 3));
+  if (!dragging) { const k = 1 - Math.exp(-dt * 0.8); lookYaw -= lookYaw * k; lookPitch -= lookPitch * k; }
+  // the sun breathes slowly up and down; horizon colour drifts amber <-> rose
+  sunEl = 0.065 + 0.045 * Math.sin(simT * 0.021);
+  warm = 0.5 + 0.5 * Math.sin(simT * 0.013 + 1.0);
+  pulse *= Math.exp(-dt * 0.9);
+  for (const o of forms) {
+    o.age += dt; o.bloom *= Math.exp(-dt * 0.7);
+    o.y = o.base + Math.sin(simT * 0.35 + o.phase) * 1.2;
+    const dx = o.x - cam.x, dz2 = o.z - cam.z, d = Math.hypot(dx, dz2);
+    const vy = cam.yaw + lookYaw, fwd = dx * Math.sin(vy) - dz2 * Math.cos(vy);
+    if (d > 125 || (fwd < -12 && d > 25)) spawnForm(o, false);
+  }
+  for (let i = lanterns.length - 1; i >= 0; i--) { const l = lanterns[i]; l.age += dt; l.y += dt * (1.1 + l.age * 0.05); l.x += (l.vx + Math.sin(simT * 0.5 + l.seed * 9) * 0.4) * dt; l.z += l.vz * dt; l.vx *= Math.exp(-dt * 0.08); l.vz *= Math.exp(-dt * 0.08); if (l.age > l.life) lanterns.splice(i, 1); }
+}
+
+// ================= render =================
+function render() {
+  const asp = cv.width / cv.height, fovY = (asp < 1 ? FOV + 14 : FOV) * D2R * (1 + boost * 0.12);
+  tanY = Math.tan(fovY / 2); tanX = tanY * asp;
+  const yaw = cam.yaw + lookYaw, pt = cam.pitch + lookPitch;
+  const F = [Math.sin(yaw) * Math.cos(pt), Math.sin(pt), -Math.cos(yaw) * Math.cos(pt)];
+  const R0 = norm(cross(F, [0, 1, 0])), U0 = cross(R0, F), cb = Math.cos(cam.bank), sb = Math.sin(cam.bank);
+  const R = [R0[0] * cb - U0[0] * sb, R0[1] * cb - U0[1] * sb, R0[2] * cb - U0[2] * sb];
+  const U = [U0[0] * cb + R0[0] * sb, U0[1] * cb + R0[1] * sb, U0[2] * cb + R0[2] * sb];
+  basis = { R, U, F };
+  const V = new Float32Array([R[0], U[0], -F[0], 0, R[1], U[1], -F[1], 0, R[2], U[2], -F[2], 0,
+    -dot(R, [cam.x, cam.y, cam.z]), -dot(U, [cam.x, cam.y, cam.z]), dot(F, [cam.x, cam.y, cam.z]), 1]);
+  VP = mul(persp(fovY, asp, 0.3, 260), V);
+  const sun = [Math.sin(sunAz) * Math.cos(sunEl), Math.sin(sunEl), -Math.cos(sunAz) * Math.cos(sunEl)];
+  const pa = sunAz + Math.PI * 0.82, pe = 0.36, planet = [Math.sin(pa) * Math.cos(pe), Math.sin(pe), -Math.cos(pa) * Math.cos(pe)];
+  const common = (pr) => { gl.uniform3fv(pr.u.uSun, sun); gl.uniform1f(pr.u.uTime, simT); gl.uniform1f(pr.u.uWarm, warm); gl.uniform1f(pr.u.uPulse, pulse); };
+
+  gl.viewport(0, 0, cv.width, cv.height);
+  gl.clearColor(0.04, 0.05, 0.1, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  // terrain first (depth), then sky fills what's left at far depth
+  gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL); gl.depthMask(true); gl.disable(gl.BLEND);
+  gl.useProgram(progTer.p); common(progTer);
+  const snap = 2 * GRID_HALF / GRID_N;
+  const cx = Math.round((cam.x + Math.sin(yaw) * GRID_AHEAD) / snap) * snap, cz = Math.round((cam.z - Math.cos(yaw) * GRID_AHEAD) / snap) * snap;
+  gl.uniform2f(progTer.u.uCenter, cx, cz); gl.uniform1f(progTer.u.uSize, GRID_HALF * 2); gl.uniformMatrix4fv(progTer.u.uVP, false, VP);
+  gl.uniform3f(progTer.u.uCam, cam.x, cam.y, cam.z);
+  gl.bindBuffer(gl.ARRAY_BUFFER, bufGrid); const ag = progTer.a("aGrid"); gl.enableVertexAttribArray(ag); gl.vertexAttribPointer(ag, 2, gl.FLOAT, false, 0, 0);
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, bufIdx); gl.drawElements(gl.TRIANGLES, idxCount, gl.UNSIGNED_SHORT, 0);
+  gl.disableVertexAttribArray(ag);
+
+  gl.useProgram(progSky.p); common(progSky);
+  gl.uniform3fv(progSky.u.uR, R); gl.uniform3fv(progSky.u.uU, U); gl.uniform3fv(progSky.u.uF, F); gl.uniform2f(progSky.u.uTan, tanX, tanY); gl.uniform3fv(progSky.u.uPlanet, planet);
+  gl.bindBuffer(gl.ARRAY_BUFFER, bufSky); const as = progSky.a("aPos"); gl.enableVertexAttribArray(as); gl.vertexAttribPointer(as, 2, gl.FLOAT, false, 0, 0);
+  gl.drawArrays(gl.TRIANGLES, 0, 3); gl.disableVertexAttribArray(as);
+
+  // floating forms + lanterns: premultiplied alpha, far to near
+  gl.useProgram(progBB.p); common(progBB);
+  gl.uniformMatrix4fv(progBB.u.uVP, false, VP);
+  const sunV = [dot(sun, R), dot(sun, U), -dot(sun, F)];
+  gl.uniform3fv(progBB.u.uSunV, norm([sunV[0], sunV[1], Math.abs(sunV[2]) * 0.6 + 0.3]));
+  gl.bindBuffer(gl.ARRAY_BUFFER, bufQuad); const aq = progBB.a("aCorner"); gl.enableVertexAttribArray(aq); gl.vertexAttribPointer(aq, 2, gl.FLOAT, false, 0, 0);
+  gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false);
+  const list = [];
+  for (const o of forms) list.push(o); for (const l of lanterns) list.push(l);
+  for (const o of list) o.dist = Math.hypot(o.x - cam.x, o.y - cam.y, o.z - cam.z);
+  list.sort((a, b) => b.dist - a.dist);
+  for (const o of list) {
+    const isL = o.life !== undefined, type = isL ? 3 : o.type;
+    if (o.dist > FOG_END + 5) continue;
+    const vd = norm([o.x - cam.x, o.y - cam.y, o.z - cam.z]); if (dot(vd, F) < 0.1) continue;
+    const fog = Math.max(1 - Math.exp(-Math.pow(o.dist / 70, 2)), clamp((o.dist - (FOG_END - 22)) / 22, 0, 1));
+    // forms fade out instead of filling the screen when you fly right past them
+    const near = isL ? 1 : clamp((o.dist - o.size * 1.6) / 10, 0, 1);
+    const fade = (isL ? Math.min(1, o.age * 2) * Math.min(1, (o.life - o.age) / 4) : Math.min(1, o.age / 2.5)) * near;
+    if (fade <= 0) continue;
+    const bl = isL ? 0 : o.bloom, s = (isL ? 0.6 : o.size) * (1 + bl * 0.35) * (type === 0 || type === 3 ? 1.6 : 1);
+    if (type === 3) gl.blendFunc(gl.ONE, gl.ONE); else gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    gl.uniform3f(progBB.u.uPos, o.x, o.y, o.z);
+    gl.uniform2f(progBB.u.uSize, type === 2 ? s * 0.55 : s, s * (type === 2 ? 1.25 : 1));
+    // monoliths stay upright; everything else faces the camera fully
+    if (type === 2) { const r = norm([R[0], 0, R[2]]); gl.uniform3fv(progBB.u.uRb, r); gl.uniform3fv(progBB.u.uUb, [0, 1, 0]); }
+    else { gl.uniform3fv(progBB.u.uRb, R); gl.uniform3fv(progBB.u.uUb, U); }
+    gl.uniform1i(progBB.u.uType, type); gl.uniform1f(progBB.u.uFog, fog); gl.uniform1f(progBB.u.uAlpha, fade);
+    gl.uniform1f(progBB.u.uBloom, bl); gl.uniform1f(progBB.u.uSeed, o.seed); gl.uniform3fv(progBB.u.uViewDir, vd);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  }
+  gl.disableVertexAttribArray(aq); gl.depthMask(true); gl.disable(gl.BLEND);
+}
+
+// ================= loop + adaptive quality =================
+const readout = document.getElementById("readout");
+let slow = 0, fast = 0, lastRead = "", frames = 0;
+function frame(now) {
+  requestAnimationFrame(frame);
+  if (glLost) return;
+  const dt = Math.min(0.05, (now - lastT) / 1000); lastT = now;
+  step(dt); render(); audioTick(); frames++;
+  if (!lockScale && document.visibilityState === "visible") {
+    if (dt > 0.024) { slow++; fast = 0; } else if (dt < 0.0175) { fast++; slow = Math.max(0, slow - 1); }
+    if (slow > 45 && scale > 0.5) { scale = Math.max(0.5, scale - 0.1); resize(); slow = 0; }
+    if (fast > 240 && scale < 1) { scale = Math.min(1, scale + 0.05); resize(); fast = 0; }
+  }
+  const hdg = Math.round(((cam.yaw * R2D) % 360 + 360) % 360).toString().padStart(3, "0");
+  const txt = `HDG ${hdg}° · ALT ${Math.round(cam.y - WATER)}`;
+  if (txt !== lastRead && frames % 6 === 0) { readout.textContent = txt; lastRead = txt; }
+}
+
+// ================= ambient sound (Web Audio, synthesized, no files) =================
+let ac = null, au = null, soundOn = localStorage.getItem("dream-sound") !== "off";
+const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
+const CHORDS = [[52, 59, 62, 66], [48, 55, 59, 64], [55, 59, 62, 66], [45, 57, 60, 64]]; // Em9, Cmaj7, Gmaj7, Am7 (E minor)
+let chordIx = 0;
+function buildAudio() {
+  const AC = window.AudioContext || window.webkitAudioContext; ac = new AC();
+  const t = ac.currentTime;
+  const master = ac.createGain(); master.gain.value = 0;
+  const comp = ac.createDynamicsCompressor(); comp.threshold.value = -18; comp.ratio.value = 4;
+  master.connect(comp); comp.connect(ac.destination);
+  const verb = ac.createConvolver(), len = ac.sampleRate * 5, ir = ac.createBuffer(2, len, ac.sampleRate);
+  for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.6); }
+  verb.buffer = ir; const wet = ac.createGain(); wet.gain.value = 0.7; verb.connect(wet); wet.connect(master);
+  // pad: four gliding voices, two detuned oscillators each, through a breathing lowpass
+  const lp = ac.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 700; lp.Q.value = 0.5;
+  const lfo = ac.createOscillator(); lfo.frequency.value = 0.05; const lfoA = ac.createGain(); lfoA.gain.value = 250; lfo.connect(lfoA); lfoA.connect(lp.frequency); lfo.start(t);
+  const pad = ac.createGain(); pad.gain.value = 0.05; lp.connect(pad); pad.connect(master); pad.connect(verb);
+  const voices = CHORDS[0].map(m => {
+    const a = ac.createOscillator(), b = ac.createOscillator(); a.type = "triangle"; b.type = "sine"; a.detune.value = -6; b.detune.value = 7;
+    a.frequency.value = b.frequency.value = mtof(m); const g = ac.createGain(); g.gain.value = 0.22;
+    a.connect(g); b.connect(g); g.connect(lp); a.start(t); b.start(t); return [a, b];
+  });
+  const sub = ac.createOscillator(); sub.frequency.value = mtof(40); const sg = ac.createGain(); sg.gain.value = 0.25; sub.connect(sg); sg.connect(lp); sub.start(t);
+  // wind: filtered noise that rises with speed
+  const nb = ac.createBuffer(1, ac.sampleRate * 3, ac.sampleRate), nd = nb.getChannelData(0); let p = 0;
+  for (let i = 0; i < nd.length; i++) { const w = Math.random() * 2 - 1; p = 0.985 * p + 0.015 * w; nd[i] = p * 6 + w * 0.15; }
+  const ns = ac.createBufferSource(); ns.buffer = nb; ns.loop = true;
+  const wbp = ac.createBiquadFilter(); wbp.type = "bandpass"; wbp.frequency.value = 500; wbp.Q.value = 0.7;
+  const wind = ac.createGain(); wind.gain.value = 0.02; ns.connect(wbp); wbp.connect(wind); wind.connect(master); wind.connect(verb); ns.start(t);
+  au = { master, verb, lp, voices, wind, wbp };
+  setMaster(); scheduleChord();
+}
+function scheduleChord() {
+  setTimeout(() => {
+    if (ac && !document.hidden) { chordIx = (chordIx + 1) % CHORDS.length; const t = ac.currentTime;
+      au.voices.forEach(([a, b], i) => { const f = mtof(CHORDS[chordIx][i]); a.frequency.setTargetAtTime(f, t, 0.9); b.frequency.setTargetAtTime(f, t, 0.9); }); }
+    scheduleChord();
+  }, 9000);
+}
+function setMaster() { if (au) au.master.gain.setTargetAtTime(soundOn ? 0.9 : 0, ac.currentTime, 0.5); }
+function toggleSound() { soundOn = !soundOn; localStorage.setItem("dream-sound", soundOn ? "on" : "off"); document.getElementById("sound").setAttribute("aria-pressed", soundOn); setMaster(); }
+document.getElementById("sound").addEventListener("click", toggleSound);
+document.getElementById("sound").setAttribute("aria-pressed", soundOn);
+function bell(f, vel, when = 0) {
+  const t = ac.currentTime + when, out = ac.createGain(); out.gain.value = 0.045 * vel; out.connect(au.master); out.connect(au.verb);
+  [[1, 1, 5], [2.0, 0.3, 2.4], [3.01, 0.12, 1.2], [5.4, 0.05, 0.6]].forEach(([r, a, d]) => {
+    const o = ac.createOscillator(), e = ac.createGain(); o.frequency.value = f * r; e.gain.setValueAtTime(0, t); e.gain.linearRampToValueAtTime(a, t + 0.01); e.gain.exponentialRampToValueAtTime(0.0001, t + d);
+    o.connect(e); e.connect(out); o.start(t); o.stop(t + d + 0.05);
+  });
+}
+function chime(vel) { if (!ac || !soundOn) return; const c = CHORDS[chordIx]; bell(mtof(c[(Math.random() * 4) | 0] + 24), vel); }
+function bloomChord(o) { if (!ac || !soundOn) return; const c = CHORDS[chordIx]; c.forEach((m, i) => bell(mtof(m + (o.type === 2 ? 12 : 24)), 0.7, i * 0.11)); }
+function whoosh() { if (!ac || !soundOn) return; const t = ac.currentTime; au.wind.gain.setTargetAtTime(0.09, t, 0.15); }
+function audioTick() {
+  if (!au) return; const t = ac.currentTime, s = cam.speed / SPEED;
+  au.wind.gain.setTargetAtTime(0.015 + boost * 0.07 + Math.abs(tiltX) * 0.015, t, 0.2);
+  au.wbp.frequency.setTargetAtTime(380 + s * 160 + boost * 500, t, 0.2);
+  au.lp.frequency.setTargetAtTime(650 + boost * 900 + (cam.y - WATER) * 8 + pulse * 600, t, 0.3);
+}
+document.addEventListener("visibilitychange", () => { if (!ac) return; if (document.hidden) ac.suspend(); else ac.resume(); });
+
+// ================= start: one tap unlocks audio + asks for motion =================
+document.getElementById("go").addEventListener("click", () => {
+  try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch (_) {}
+  if (!ac) buildAudio(); ac.resume();
+  const msg = document.getElementById("msg");
+  const DOE = window.DeviceOrientationEvent;
+  const done = () => {
+    document.getElementById("start").remove(); started = true; setTimeout(() => chime(0.8), 400);
+    setTimeout(() => { if (!haveSensor) document.getElementById("note").textContent = "MOUSE / ARROWS = STEER & CLIMB · DRAG = LOOK · CLICK = LANTERN · HOLD OR SPACE = FASTER"; }, 800);
+  };
+  if (DOE && typeof DOE.requestPermission === "function") {
+    DOE.requestPermission().then(r => { if (r === "granted") addEventListener("deviceorientation", onOrient); else msg.textContent = "Motion off. Drag and tap still work."; done(); })
+      .catch(() => { msg.textContent = "Motion unavailable. Drag and tap still work."; done(); });
+  } else { addEventListener("deviceorientation", onOrient); done(); }
+});
+
+// ================= boot =================
+let glLost = false;
+cv.addEventListener("webglcontextlost", e => { e.preventDefault(); glLost = true; });
+cv.addEventListener("webglcontextrestored", () => { initGL(); glLost = false; });
+if (!gl) { document.getElementById("nogl").hidden = false; document.getElementById("start").remove(); }
+else {
+  initGL(); resize();
+  // start somewhere with an open view ahead (a lake or low valley toward the sun)
+  let bestX = 0, bestH = 1e9;
+  for (let x = -600; x <= 600; x += 15) { let m = -1e9; for (let z = 0; z <= 70; z += 7) m = Math.max(m, terrain(x, -z)); if (m < bestH) { bestH = m; bestX = x; } }
+  cam.x = bestX; cam.y = Math.max(terrain(cam.x, 0), WATER) + cam.altOff + 4;
+  for (const o of forms) spawnForm(o, true);
+  requestAnimationFrame(t => { lastT = t; requestAnimationFrame(frame); });
+}
+// tiny hook for automated tests and tinkering in the console
+window.dream = { stats: () => ({ w: cv.width, h: cv.height, scale, cam: { ...cam }, tiltX, tiltY, forms: forms.length, lanterns: lanterns.length, deriv, hp }), tap: tapAt,
+  bench: n => { const t = performance.now(); for (let i = 0; i < n; i++) { step(1 / 60); render(); } gl.finish(); return (performance.now() - t) / n; } };
+</script>
+</body>
+</html>

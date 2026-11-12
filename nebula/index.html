@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0b0d12">
+<title>Russell Merrick — Nebula</title>
+<meta name="description" content="A glowing particle nebula you pull with gravity and stir with your fingers. Music, Nandland, and projects inside.">
+<meta name="author" content="Russell Merrick">
+<link rel="canonical" href="https://russellmerrick.com/nebula/">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Russell Merrick">
+<meta property="og:title" content="Russell Merrick — Nebula">
+<meta property="og:description" content="Tilt to pull tens of thousands of glowing particles. Touch to stir them.">
+<meta property="og:url" content="https://russellmerrick.com/nebula/">
+<meta property="og:image" content="https://russellmerrick.com/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+@font-face{font-family:"IBM Plex Sans";font-weight:500;font-display:swap;src:url(../fonts/ibm-plex-sans-500.woff2) format("woff2")}
+@font-face{font-family:"IBM Plex Mono";font-weight:400;font-display:swap;src:url(../fonts/ibm-plex-mono-400.woff2) format("woff2")}
+:root{--bg:#0b0d12;--elev:#14161c;--border:#2a2f3a;--text:#e8eaef;--dim:#9aa1b3;--accent:#e8a23a;--glow:rgba(232,162,58,.35)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:"IBM Plex Sans",system-ui,sans-serif;overflow:hidden;overscroll-behavior:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:crosshair;background:#0b0d12}
+#nogl{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:32px;text-align:center;color:var(--dim);font:400 14px/1.6 "IBM Plex Sans",sans-serif}#nogl a{color:var(--accent)}#nogl[hidden]{display:none}
+#hud{position:fixed;top:0;left:0;right:0;padding:max(12px,env(safe-area-inset-top)) 16px 22px;display:flex;justify-content:space-between;align-items:center;gap:8px;white-space:nowrap;font:400 11px/1.4 "IBM Plex Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);pointer-events:none;background:linear-gradient(180deg,rgba(11,13,18,.72),rgba(11,13,18,0))}
+#hud b{color:var(--accent);font-weight:400}
+#hud .right{display:flex;gap:8px;align-items:center;pointer-events:auto}
+.chip{background:rgba(11,13,18,.35);border:1px solid var(--border);color:var(--dim);font:inherit;letter-spacing:inherit;text-transform:inherit;padding:4px 8px;border-radius:6px;text-decoration:none;cursor:pointer;line-height:1.4}
+.chip:hover,.chip:focus-visible{color:var(--text);border-color:#3a4150;outline:none}
+.chip.accent{color:var(--accent);border-color:rgba(232,162,58,.5)}
+.chip.accent:hover,.chip.accent:focus-visible{background:var(--accent);color:#1a1308}
+.chip[aria-pressed="false"]{opacity:.55;text-decoration:line-through}
+/* experience switcher: add future experiences as more <a> entries */
+.exps{display:flex;border:1px solid var(--border);border-radius:6px;overflow:hidden;background:rgba(11,13,18,.35)}
+.exps a{color:var(--dim);text-decoration:none;padding:4px 8px;line-height:1.4}
+.exps a+a{border-left:1px solid var(--border)}
+.exps a:hover,.exps a:focus-visible{color:var(--text);outline:none}
+.exps a[aria-current="page"]{color:#1a1308;background:var(--accent)}
+#bar{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:space-between;align-items:flex-end;gap:10px;padding:26px max(16px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));font:400 11px/1.5 "IBM Plex Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);pointer-events:none;background:linear-gradient(0deg,rgba(11,13,18,.6),rgba(11,13,18,0))}
+#bar .tools{display:flex;gap:8px;pointer-events:auto}
+#note{max-width:64ch}
+@media (max-width:560px){#hud .long,#readout{display:none}#bar{flex-direction:column;align-items:stretch}#note{font-size:9.5px;letter-spacing:.08em;text-align:center;max-width:none}#bar .tools{justify-content:center}}
+@media (min-width:561px){#hud .short{display:none}#note{white-space:nowrap}}
+#start{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:radial-gradient(ellipse 55% 42% at 50% 48%,rgba(11,13,18,.82),rgba(11,13,18,.35) 72%,rgba(11,13,18,.1));z-index:5;text-align:center;padding:24px}
+#start h1{margin:0;font-weight:500;font-size:clamp(30px,7vw,52px);letter-spacing:-.01em;text-shadow:0 2px 30px rgba(0,0,0,.6)}
+#start p{margin:0;color:#c5cad6;font:400 12px/1.7 "IBM Plex Mono",monospace;letter-spacing:.12em;text-transform:uppercase;max-width:36ch;text-shadow:0 1px 12px rgba(0,0,0,.8)}
+#go{appearance:none;border:0;border-radius:999px;background:var(--accent);color:#1a1308;font:500 16px "IBM Plex Sans",sans-serif;padding:16px 34px;box-shadow:0 0 40px -6px var(--glow);cursor:pointer}
+#skip{color:var(--dim);font:400 11px "IBM Plex Mono",monospace;letter-spacing:.14em;text-transform:uppercase;text-decoration:none;border-bottom:1px solid var(--border);padding-bottom:2px}
+#skip:hover{color:var(--accent)}
+#start .alt{color:var(--dim);font:400 11px "IBM Plex Mono",monospace;letter-spacing:.14em;text-transform:uppercase}
+#start .alt a{color:var(--dim);text-decoration:none;border-bottom:1px solid var(--border)}
+@media (max-width:420px){.exps a{padding:4px 6px;letter-spacing:.06em}#hud .right{gap:6px}}
+</style>
+</head>
+<body>
+<canvas id="gl" aria-label="Particle nebula. Tilt to pull the cloud, touch to swirl it."></canvas>
+<div id="hud"><span><span class="long">RUSSELL MERRICK / </span><b class="long">NEBULA</b></span><span id="readout">PARTICLES 0</span>
+  <span class="right">
+    <nav class="exps" aria-label="Experiences"><a href="../">BASS</a><a href="../garden/">GARDEN</a><a href="../dream/">DREAM</a><a href="./" aria-current="page">NEBULA</a></nav>
+    <button id="recenter" class="chip" title="Make the current angle level"><span class="long">RECENTER</span><span class="short">⟲</span></button>
+    <a class="chip accent" href="../about/"><span class="long">ENTER SITE →</span><span class="short">SITE →</span></a>
+  </span></div>
+<div id="bar">
+  <span id="note">TILT = GRAVITY · TOUCH = VORTEX · TWO FINGERS = REPEL · DOUBLE-TAP = NOVA</span>
+  <span class="tools">
+    <button id="sound" class="chip" aria-pressed="true" title="Ambient sound on/off">SOUND</button>
+    <button id="bang" class="chip accent" title="Collapse the cloud and let it explode again">BIG BANG</button>
+  </span>
+</div>
+<div id="start">
+  <h1>Nebula</h1>
+  <p>Tens of thousands of glowing particles. Tilt to pull them like gravity. Touch to stir a vortex. Two fingers push them away. Sound is soft and optional.</p>
+  <button id="go">Tap to start</button>
+  <p id="msg" style="text-transform:none;letter-spacing:.04em"></p>
+  <a id="skip" href="../about/">Skip to site →</a>
+  <span class="alt">or try the <a href="../">tilt bass</a> · <a href="../garden/">sand garden</a> · <a href="../dream/">dream</a></span>
+</div>
+<div id="nogl" hidden>This one needs WebGL, which this browser has turned off. Try the <a href="../garden/">sand garden</a> or <a href="../about/">enter the site</a>.</div>
+<script>
+"use strict";
+// ================= config =================
+const params = new URLSearchParams(location.search);
+const coarse = matchMedia("(pointer:coarse)").matches;
+const MAX_P = coarse ? 30000 : 60000, MIN_P = 10000;
+const GRID = 20, DOMAIN = 2.3;               // flow field grid (GRID^3) over [-DOMAIN, DOMAIN]^3
+const FIELD_FRAMES = 12, FIELD_DT = 0.2;     // field rebuilt every 12 frames, advancing 0.2 time units
+const FLOW = 0.55, BOUND = 2.1, CAM_DIST = 5.1;
+const DEAD = 3, FULL = 30, DPR_CAP = 2, MAX_PIXELS = 1.3e6;
+const D2R = Math.PI / 180, R2D = 180 / Math.PI, TAU = Math.PI * 2;
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+
+// ================= flow field: curl of 3D value noise, sampled on a grid, rebuilt incrementally =================
+function ihash(x, y, z) { let h = Math.imul(x, 374761393) + Math.imul(y, 668265263) + Math.imul(z, 2147483647) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
+function vnoise3(x, y, z) {
+  const ix = Math.floor(x), iy = Math.floor(y), iz = Math.floor(z), fx = x - ix, fy = y - iy, fz = z - iz;
+  const ux = fx * fx * (3 - 2 * fx), uy = fy * fy * (3 - 2 * fy), uz = fz * fz * (3 - 2 * fz);
+  const l = (a, b, t) => a + (b - a) * t;
+  return l(l(l(ihash(ix, iy, iz), ihash(ix + 1, iy, iz), ux), l(ihash(ix, iy + 1, iz), ihash(ix + 1, iy + 1, iz), ux), uy),
+           l(l(ihash(ix, iy, iz + 1), ihash(ix + 1, iy, iz + 1), ux), l(ihash(ix, iy + 1, iz + 1), ihash(ix + 1, iy + 1, iz + 1), ux), uy), uz) * 2 - 1;
+}
+function pot(c, x, y, z, t) { // vector potential component c, two octaves, drifting through time
+  const o = c * 31.7;
+  return vnoise3(x * 0.9 + o, y * 0.9 + t * 0.35, z * 0.9 - t * 0.2) + 0.5 * vnoise3(x * 1.9 - o, y * 1.9 - t * 0.5, z * 1.9 + t * 0.3);
+}
+const GN = GRID * GRID * GRID, CELL = 2 * DOMAIN / (GRID - 1);
+let fA = new Float32Array(GN * 3), fB = new Float32Array(GN * 3), fBuild = new Float32Array(GN * 3);
+let fieldT = 0, buildIdx = 0, fieldPhase = 0;
+function buildSome(count, t) {
+  const e = 0.12, end = Math.min(GN, buildIdx + count);
+  for (let i = buildIdx; i < end; i++) {
+    const gz = (i / (GRID * GRID)) | 0, gy = ((i / GRID) | 0) % GRID, gx = i % GRID;
+    const x = -DOMAIN + gx * CELL, y = -DOMAIN + gy * CELL, z = -DOMAIN + gz * CELL;
+    // curl(A) = (dAz/dy - dAy/dz, dAx/dz - dAz/dx, dAy/dx - dAx/dy)
+    const cx = (pot(2, x, y + e, z, t) - pot(2, x, y - e, z, t)) - (pot(1, x, y, z + e, t) - pot(1, x, y, z - e, t));
+    const cy = (pot(0, x, y, z + e, t) - pot(0, x, y, z - e, t)) - (pot(2, x + e, y, z, t) - pot(2, x - e, y, z, t));
+    const cz = (pot(1, x + e, y, z, t) - pot(1, x - e, y, z, t)) - (pot(0, x, y + e, z, t) - pot(0, x, y - e, z, t));
+    // add a slow galactic swirl around the vertical axis so the cloud always turns
+    fBuild[i * 3] = cx / (2 * e) - z * 0.35; fBuild[i * 3 + 1] = cy / (2 * e); fBuild[i * 3 + 2] = cz / (2 * e) + x * 0.35;
+  }
+  buildIdx = end;
+}
+function initField() { buildIdx = 0; buildSome(GN, 0); fA.set(fBuild); buildIdx = 0; buildSome(GN, FIELD_DT); fB.set(fBuild); buildIdx = 0; fieldT = FIELD_DT; }
+function advanceField() {
+  buildSome(Math.ceil(GN / FIELD_FRAMES), fieldT + FIELD_DT);
+  fieldPhase++;
+  if (fieldPhase >= FIELD_FRAMES) { const tmp = fA; fA = fB; fB = fBuild; fBuild = tmp; fieldT += FIELD_DT; fieldPhase = 0; buildIdx = 0; }
+}
+
+// ================= particles =================
+let N = Math.round(MAX_P * (params.has("p") ? clamp(+params.get("p"), 0.1, 1) : 1)), active = N;
+const pos = new Float32Array(MAX_P * 4), vel = new Float32Array(MAX_P * 3), seed = new Float32Array(MAX_P);
+function gauss() { return Math.sqrt(-2 * Math.log(Math.random() + 1e-9)) * Math.cos(TAU * Math.random()); }
+function seedParticles(bang) {
+  for (let i = 0; i < MAX_P; i++) {
+    const arm = (i % 3) * TAU / 3, r = Math.abs(gauss()) * 0.55 + 0.05, a = arm + r * 2.6 + gauss() * 0.35;
+    let x = Math.cos(a) * r + gauss() * 0.12, y = gauss() * 0.16 * (1.2 - r * 0.4), z = Math.sin(a) * r + gauss() * 0.12;
+    if (bang) { const s = 0.04; x *= s; y *= s; z *= s; const k = 2.5 + Math.random() * 2.5, l = Math.hypot(x, y, z) || 1; vel[i * 3] = x / l * k; vel[i * 3 + 1] = y / l * k; vel[i * 3 + 2] = z / l * k; }
+    else { vel[i * 3] = vel[i * 3 + 1] = vel[i * 3 + 2] = 0; }
+    pos[i * 4] = x; pos[i * 4 + 1] = y; pos[i * 4 + 2] = z; pos[i * 4 + 3] = 0;
+    if (!bang) seed[i] = Math.random();
+  }
+}
+seedParticles(false);
+
+// ================= tilt =================
+let rawRoll = 0, rawPitch = 0, zero = null, haveSensor = false, tiltX = 0, tiltY = 0, mouseTX = 0, mouseTY = 0, kb = { x: 0, y: 0 }, started = false;
+function screenAngle() { return (screen.orientation && screen.orientation.angle) ?? (window.orientation || 0); }
+function onOrient(e) {
+  if (e.beta == null) return; haveSensor = true;
+  const b = e.beta * D2R, gm = e.gamma * D2R;
+  const ux = -Math.cos(b) * Math.sin(gm), uy = Math.sin(b), uz = Math.cos(b) * Math.cos(gm);
+  const a = screenAngle() * D2R;
+  const ssx = ux * Math.cos(a) + uy * Math.sin(a), ssy = -ux * Math.sin(a) + uy * Math.cos(a);
+  rawRoll = Math.asin(clamp(-ssx, -1, 1)) * R2D;
+  rawPitch = Math.atan2(uz, ssy) * R2D;
+  if (!zero) zero = { r: rawRoll, p: rawPitch };
+}
+function recenter() { zero = haveSensor ? { r: rawRoll, p: rawPitch } : null; }
+document.getElementById("recenter").addEventListener("click", recenter);
+const dz = v => { const s = Math.sign(v), a = Math.abs(v); return a < DEAD ? 0 : s * Math.min(1, (a - DEAD) / (FULL - DEAD)); };
+function updateTilt(dt) {
+  let tx = 0, ty = 0;
+  if (haveSensor && zero) { let dr = rawRoll - zero.r, dp = rawPitch - zero.p; if (dp > 180) dp -= 360; if (dp < -180) dp += 360; tx = dz(dr); ty = dz(dp); }
+  else if (started) { tx = clamp(mouseTX + kb.x, -1, 1); ty = clamp(mouseTY + kb.y, -1, 1); }
+  const k = 1 - Math.exp(-dt * 5); tiltX += (tx - tiltX) * k; tiltY += (ty - tiltY) * k;
+}
+const mdz = v => Math.abs(v) < 0.15 ? 0 : Math.sign(v) * (Math.abs(v) - 0.15) / 0.85;
+addEventListener("mousemove", e => { if (haveSensor || ptrs.size) return; mouseTX = mdz((e.clientX / innerWidth - 0.5) * 2) * 0.8; mouseTY = mdz((0.5 - e.clientY / innerHeight) * 2) * 0.8; });
+document.addEventListener("mouseleave", () => { mouseTX = mouseTY = 0; });
+const KT = { ArrowLeft: [-1, 0], KeyA: [-1, 0], ArrowRight: [1, 0], KeyD: [1, 0], ArrowUp: [0, 1], KeyW: [0, 1], ArrowDown: [0, -1], KeyS: [0, -1] };
+const kdown = new Set();
+function kbUpdate() { kb.x = 0; kb.y = 0; for (const c of kdown) { kb.x += KT[c][0]; kb.y += KT[c][1]; } }
+addEventListener("keydown", e => {
+  if (e.code in KT) { kdown.add(e.code); kbUpdate(); e.preventDefault(); }
+  else if (e.code === "KeyB" && !e.repeat) bigBang();
+  else if (e.code === "KeyM" && !e.repeat) toggleSound();
+});
+addEventListener("keyup", e => { if (e.code in KT) { kdown.delete(e.code); kbUpdate(); } });
+addEventListener("blur", () => { kdown.clear(); kbUpdate(); });
+
+// ================= touch: vortex, repel, nova =================
+const ptrs = new Map(); let lastTap = { t: 0, x: 0, y: 0 }, novas = [];
+let cssW = innerWidth, cssH = innerHeight;
+const canvas = document.getElementById("gl");
+canvas.addEventListener("pointerdown", e => {
+  if (!started) return;
+  canvas.setPointerCapture(e.pointerId);
+  const repel = e.button === 2 || e.shiftKey;
+  ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY, repel, t0: performance.now(), moved: 0, spin: 1 });
+  const now = performance.now();
+  if (now - lastTap.t < 320 && Math.hypot(e.clientX - lastTap.x, e.clientY - lastTap.y) < 40) { nova(e.clientX, e.clientY); lastTap.t = 0; }
+  else lastTap = { t: now, x: e.clientX, y: e.clientY };
+  touchSound(true);
+});
+canvas.addEventListener("pointermove", e => { const p = ptrs.get(e.pointerId); if (!p) return; const dx = e.clientX - p.x, dy = e.clientY - p.y; p.moved += Math.hypot(dx, dy);
+  // circling clockwise vs anticlockwise picks the vortex direction
+  const cx = cssW / 2, cy = cssH / 2, cr = (p.x - cx) * dy - (p.y - cy) * dx; if (Math.abs(cr) > 40) p.spin += (Math.sign(cr) - p.spin) * 0.08;
+  p.x = e.clientX; p.y = e.clientY; });
+const endPtr = e => { if (ptrs.delete(e.pointerId) && !ptrs.size) touchSound(false); };
+canvas.addEventListener("pointerup", endPtr); canvas.addEventListener("pointercancel", endPtr);
+canvas.addEventListener("contextmenu", e => e.preventDefault());
+
+// ================= camera =================
+let orbit = 0, camYaw = 0, camPitch = 0.28, basis = { R: [1, 0, 0], U: [0, 1, 0], F: [0, 0, -1] }, camPos = [0, 0, CAM_DIST], tanX = 1, tanY = 1;
+const norm = v => { const l = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / l, v[1] / l, v[2] / l]; };
+const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+function updateCamera(dt) {
+  orbit += dt * 0.06;
+  const yaw = orbit + tiltX * 0.45, pitch = 0.28 + tiltY * 0.35;
+  camYaw += (yaw - camYaw) * (1 - Math.exp(-dt * 3)); camPitch += (pitch - camPitch) * (1 - Math.exp(-dt * 3));
+  camPos = [Math.sin(camYaw) * Math.cos(camPitch) * CAM_DIST, Math.sin(camPitch) * CAM_DIST, Math.cos(camYaw) * Math.cos(camPitch) * CAM_DIST];
+  const F = norm([-camPos[0], -camPos[1], -camPos[2]]), R = norm(cross(F, [0, 1, 0])), U = cross(R, F);
+  basis = { R, U, F };
+  const asp = cssW / cssH;
+  tanX = asp >= 1 ? Math.tan(26 * D2R) * asp : 0.46; tanY = tanX / asp;
+}
+function pointerWorld(px, py) {
+  const nx = (px / cssW) * 2 - 1, ny = 1 - (py / cssH) * 2, { R, U, F } = basis;
+  const d = norm([F[0] + nx * tanX * R[0] + ny * tanY * U[0], F[1] + nx * tanX * R[1] + ny * tanY * U[1], F[2] + nx * tanX * R[2] + ny * tanY * U[2]]);
+  const t = -dot(camPos, F) / dot(d, F);
+  return [camPos[0] + d[0] * t, camPos[1] + d[1] * t, camPos[2] + d[2] * t];
+}
+function nova(px, py) { const w = pointerWorld(px, py); novas.push({ x: w[0], y: w[1], z: w[2], k: 1 }); boom(0.8); }
+function bigBang() { seedParticles(true); boom(1.3); pulse = 1; }
+document.getElementById("bang").addEventListener("click", bigBang);
+
+// ================= simulation =================
+function tri(A, B, w, b0, b1, b2, b3, b4, b5, b6, b7, w000, w100, w010, w110, w001, w101, w011, w111, c) {
+  const a = A[b0 + c] * w000 + A[b1 + c] * w100 + A[b2 + c] * w010 + A[b3 + c] * w110 + A[b4 + c] * w001 + A[b5 + c] * w101 + A[b6 + c] * w011 + A[b7 + c] * w111;
+  const b = B[b0 + c] * w000 + B[b1 + c] * w100 + B[b2 + c] * w010 + B[b3 + c] * w110 + B[b4 + c] * w001 + B[b5 + c] * w101 + B[b6 + c] * w011 + B[b7 + c] * w111;
+  return a + (b - a) * w;
+}
+let energy = 0, comX = 0, comY = 0, comZ = 0, pulse = 0, simT = 0;
+function simulate(dt) {
+  simT += dt; updateTilt(dt); updateCamera(dt); advanceField();
+  const w = fieldPhase / FIELD_FRAMES, A = fA, B = fB, G = GRID, G2 = G * G, inv = 1 / CELL, maxI = G - 1.001;
+  const { R, U, F } = basis;
+  // tilt = gravity in screen space (right edge down pulls right, top edge away pulls up)
+  const gs = 2.4, gx = (R[0] * tiltX + U[0] * tiltY) * gs, gy = (R[1] * tiltX + U[1] * tiltY) * gs, gz = (R[2] * tiltX + U[2] * tiltY) * gs;
+  const drag = 1 - Math.exp(-dt * 2.2), spring = 0.25 * dt;
+  // touch attractors
+  const at = [];
+  for (const p of ptrs.values()) { const wp = pointerWorld(p.x, p.y); at.push(wp[0], wp[1], wp[2], (ptrs.size > 1 || p.repel) ? -1 : 1, p.spin); }
+  const nat = at.length / 5, fx0 = F[0], fy0 = F[1], fz0 = F[2];
+  const nv = novas.length;
+  let eSum = 0, sx = 0, sy = 0, sz = 0;
+  for (let i = 0; i < active; i++) {
+    const i4 = i * 4, i3 = i * 3;
+    let x = pos[i4], y = pos[i4 + 1], z = pos[i4 + 2], vx = vel[i3], vy = vel[i3 + 1], vz = vel[i3 + 2];
+    // trilinear sample of the two field snapshots
+    let gxf = clamp((x + DOMAIN) * inv, 0, maxI), gyf = clamp((y + DOMAIN) * inv, 0, maxI), gzf = clamp((z + DOMAIN) * inv, 0, maxI);
+    const ix = gxf | 0, iy = gyf | 0, iz = gzf | 0, tx = gxf - ix, ty = gyf - iy, tz = gzf - iz;
+    const b0 = (iz * G2 + iy * G + ix) * 3, b1 = b0 + 3, b2 = b0 + G * 3, b3 = b2 + 3, b4 = b0 + G2 * 3, b5 = b4 + 3, b6 = b4 + G * 3, b7 = b6 + 3;
+    const w000 = (1 - tx) * (1 - ty) * (1 - tz), w100 = tx * (1 - ty) * (1 - tz), w010 = (1 - tx) * ty * (1 - tz), w110 = tx * ty * (1 - tz);
+    const w001 = (1 - tx) * (1 - ty) * tz, w101 = tx * (1 - ty) * tz, w011 = (1 - tx) * ty * tz, w111 = tx * ty * tz;
+    // blend the two snapshots per corner first, then one trilinear pass per component (unrolled for speed)
+    const fx = tri(A, B, w, b0, b1, b2, b3, b4, b5, b6, b7, w000, w100, w010, w110, w001, w101, w011, w111, 0);
+    const fy = tri(A, B, w, b0, b1, b2, b3, b4, b5, b6, b7, w000, w100, w010, w110, w001, w101, w011, w111, 1);
+    const fz = tri(A, B, w, b0, b1, b2, b3, b4, b5, b6, b7, w000, w100, w010, w110, w001, w101, w011, w111, 2);
+    // relax toward the flow, plus gravity and a soft pull to the centre
+    vx += (fx * FLOW - vx) * drag + (gx - x * spring * 4) * dt * 1.0;
+    vy += (fy * FLOW - vy) * drag + (gy - y * spring * 4) * dt * 1.0;
+    vz += (fz * FLOW - vz) * drag + (gz - z * spring * 4) * dt * 1.0;
+    for (let k = 0; k < nat; k++) {
+      const o = k * 5, dx = at[o] - x, dy = at[o + 1] - y, dzz = at[o + 2] - z, d2 = dx * dx + dy * dy + dzz * dzz + 0.04;
+      if (at[o + 3] > 0) {
+        const f = 2.2 / (d2 + 0.25) * dt, s = at[o + 4] * 3.2 / (d2 + 0.12) * dt;
+        // swirl = view axis x offset: particles orbit the finger like a whirlpool
+        vx += dx * f + (fy0 * dzz - fz0 * dy) * s; vy += dy * f + (fz0 * dx - fx0 * dzz) * s; vz += dzz * f + (fx0 * dy - fy0 * dx) * s;
+      } else if (d2 < 1.6) { const f = -3.5 / (d2 * Math.sqrt(d2) + 0.05) * dt; vx += dx * f; vy += dy * f; vz += dzz * f; }
+    }
+    for (let k = 0; k < nv; k++) { const n = novas[k], dx = x - n.x, dy = y - n.y, dzz = z - n.z, d2 = dx * dx + dy * dy + dzz * dzz + 0.02; if (d2 < 1.2) { const f = n.k * 2.6 / (d2 + 0.08); vx += dx * f; vy += dy * f; vz += dzz * f; } }
+    x += vx * dt; y += vy * dt; z += vz * dt;
+    const r2 = x * x + y * y + z * z;
+    // soft shell: past r=1.45 a growing inward pull, so the edge feathers out instead of forming a hard rim
+    if (r2 > 2.1) { const r = Math.sqrt(r2), k = (r - 1.45) * 2.4 * dt / r; vx -= x * k; vy -= y * k; vz -= z * k; }
+    if (r2 > BOUND * BOUND) { const r = Math.sqrt(r2), k = (r - BOUND) / r; x -= x * k * 0.5; y -= y * k * 0.5; z -= z * k * 0.5; const vn = (vx * x + vy * y + vz * z) / r2; if (vn > 0) { vx -= x * vn * 1.6; vy -= y * vn * 1.6; vz -= z * vn * 1.6; } }
+    pos[i4] = x; pos[i4 + 1] = y; pos[i4 + 2] = z;
+    const sp = Math.sqrt(vx * vx + vy * vy + vz * vz); pos[i4 + 3] = sp;
+    vel[i3] = vx; vel[i3 + 1] = vy; vel[i3 + 2] = vz;
+    eSum += sp; sx += x; sy += y; sz += z;
+  }
+  novas = novas.filter(n => (n.k *= 0.6) > 0.02);
+  energy += ((eSum / active) - energy) * 0.1;
+  comX = sx / active; comY = sy / active; comZ = sz / active;
+  pulse *= Math.exp(-dt * 1.2);
+}
+
+// ================= WebGL =================
+const gl = canvas.getContext("webgl", { antialias: false, alpha: false, depth: false, powerPreference: "high-performance" });
+const VS_P = `precision highp float;
+attribute vec4 aPos; attribute float aSeed; uniform mat4 uVP; uniform float uSize; uniform float uBright; varying vec3 vCol; varying float vA;
+vec3 palette(float s){
+  if (s < 0.40) return vec3(1.0, 0.52, 0.10);        // amber
+  if (s < 0.64) return vec3(1.0, 0.30, 0.12);        // sunrise orange
+  if (s < 0.80) return vec3(0.95, 0.22, 0.42);       // rose
+  if (s < 0.93) return vec3(1.0, 0.78, 0.38);        // pale gold
+  return vec3(0.45, 0.55, 1.0);                      // a few cool blue stars
+}
+void main(){
+  vec4 p = uVP * vec4(aPos.xyz, 1.0);
+  gl_Position = p;
+  float sp = clamp(aPos.w * 0.9, 0.0, 2.5);
+  vCol = mix(palette(aSeed), vec3(1.0, 0.9, 0.7), clamp(sp * 0.15, 0.0, 0.35));
+  vA = (0.08 + sp * 0.08) * uBright * (0.6 + aSeed * 0.8);
+  gl_PointSize = clamp(uSize * (0.7 + aSeed * 0.9) / p.w, 1.0, 18.0);
+}`;
+const FS_P = `precision mediump float; varying vec3 vCol; varying float vA;
+void main(){ vec2 c = gl_PointCoord * 2.0 - 1.0; float r = dot(c, c); if (r > 1.0) discard; float g = exp(-r * 3.2); gl_FragColor = vec4(vCol * vA * g, 1.0); }`;
+const VS_Q = `attribute vec2 aQ; varying vec2 vUv; void main(){ vUv = aQ * 0.5 + 0.5; gl_Position = vec4(aQ, 0.0, 1.0); }`;
+const FS_C = `precision mediump float; varying vec2 vUv; uniform sampler2D uTex; uniform vec2 uPx; uniform vec2 uCore; uniform float uAsp; uniform float uPulse;
+void main(){
+  vec3 c = texture2D(uTex, vUv).rgb;
+  // cheap bloom: two rings of taps
+  vec3 b = vec3(0.0);
+  for (int i = 0; i < 8; i++) { float a = float(i) * 0.7854; vec2 o = vec2(cos(a), sin(a));
+    b += texture2D(uTex, vUv + o * uPx * 4.0).rgb + texture2D(uTex, vUv + o.yx * uPx * 11.0).rgb * 0.7; }
+  c += b * 0.055;
+  // backdrop: deep navy with a warm sunrise glow around the cloud's centre
+  vec2 q = (vUv - uCore) * vec2(uAsp, 1.0);
+  float d = length(q);
+  vec3 bg = mix(vec3(0.055, 0.06, 0.11), vec3(0.035, 0.04, 0.075), smoothstep(0.0, 1.2, length((vUv - 0.5) * vec2(uAsp, 1.0))));
+  bg += vec3(0.45, 0.16, 0.06) * exp(-d * d * 9.0) * (0.12 + uPulse * 0.6);
+  // tone map by luminance so dense regions stay amber instead of washing out to white
+  vec3 h = c * 1.6; float l = max(max(h.r, h.g), h.b); vec3 col = bg + h * ((1.0 - exp(-l * 1.3)) / max(l, 1e-4));
+  gl_FragColor = vec4(col, 1.0);
+}`;
+let progP, progC, progF, bufP, bufS, bufQ, fbo, tex, fbW = 0, fbH = 0;
+function compile(type, src) { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; }
+function program(vs, fs) { const p = gl.createProgram(); gl.attachShader(p, compile(gl.VERTEX_SHADER, vs)); gl.attachShader(p, compile(gl.FRAGMENT_SHADER, fs)); gl.linkProgram(p);
+  if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
+  const u = {}; const n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS); for (let i = 0; i < n; i++) { const nm = gl.getActiveUniform(p, i).name; u[nm] = gl.getUniformLocation(p, nm); } return { p, u, a: nm => gl.getAttribLocation(p, nm) }; }
+function initGL() {
+  progP = program(VS_P, FS_P); progC = program(VS_Q, FS_C);
+  progF = program(VS_Q, `precision mediump float; uniform vec4 uC; void main(){ gl_FragColor = uC; }`);
+  bufP = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, bufP); gl.bufferData(gl.ARRAY_BUFFER, pos.byteLength, gl.DYNAMIC_DRAW);
+  bufS = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, bufS); gl.bufferData(gl.ARRAY_BUFFER, seed, gl.STATIC_DRAW);
+  bufQ = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, bufQ); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+  fbW = fbH = 0; makeFBO();
+}
+function makeFBO() {
+  if (fbW === canvas.width && fbH === canvas.height && fbo) return;
+  if (tex) { gl.deleteTexture(tex); gl.deleteFramebuffer(fbo); }
+  fbW = canvas.width; fbH = canvas.height;
+  tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, fbW, fbH, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+  for (const [k, v] of [[gl.TEXTURE_MIN_FILTER, gl.LINEAR], [gl.TEXTURE_MAG_FILTER, gl.LINEAR], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, v);
+  fbo = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, fbo); gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+  gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT); gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+}
+let scale = params.has("scale") ? clamp(+params.get("scale"), 0.3, 1) : (coarse ? 0.85 : 1), lockQ = params.has("scale"), dpr = 1;
+function resize() {
+  cssW = innerWidth; cssH = innerHeight; dpr = Math.min(DPR_CAP, devicePixelRatio || 1);
+  const cap = Math.sqrt(MAX_PIXELS / (cssW * cssH * dpr * dpr)), k = dpr * Math.min(1, cap) * scale;
+  canvas.width = Math.max(2, Math.round(cssW * k)); canvas.height = Math.max(2, Math.round(cssH * k));
+  if (gl && progP) makeFBO();
+}
+addEventListener("resize", resize);
+function persp(t, asp, n, f) { const nf = 1 / (n - f); return new Float32Array([1 / (t * asp), 0, 0, 0, 0, 1 / t, 0, 0, 0, 0, (f + n) * nf, -1, 0, 0, 2 * f * n * nf, 0]); }
+function mul(a, b) { const o = new Float32Array(16); for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) { let s = 0; for (let k = 0; k < 4; k++) s += a[k * 4 + r] * b[c * 4 + k]; o[c * 4 + r] = s; } return o; }
+function project(x, y, z, VP) { const cx = VP[0] * x + VP[4] * y + VP[8] * z + VP[12], cy = VP[1] * x + VP[5] * y + VP[9] * z + VP[13], w = VP[3] * x + VP[7] * y + VP[11] * z + VP[15]; return [(cx / w) * 0.5 + 0.5, (cy / w) * 0.5 + 0.5]; }
+function render(dt) {
+  const { R, U, F } = basis, c = camPos;
+  const V = new Float32Array([R[0], U[0], -F[0], 0, R[1], U[1], -F[1], 0, R[2], U[2], -F[2], 0, -dot(R, c), -dot(U, c), dot(F, c), 1]);
+  const VP = mul(persp(tanY, cssW / cssH, 0.1, 20), V);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, fbo); gl.viewport(0, 0, fbW, fbH);
+  // fade the previous frame (trails): multiply, then subtract a hair so 8-bit residue can't linger
+  gl.enable(gl.BLEND); gl.useProgram(progF.p);
+  gl.bindBuffer(gl.ARRAY_BUFFER, bufQ); const aq = progF.a("aQ"); gl.enableVertexAttribArray(aq); gl.vertexAttribPointer(aq, 2, gl.FLOAT, false, 0, 0);
+  const keep = Math.pow(0.78, dt * 60);
+  gl.blendEquation(gl.FUNC_ADD); gl.blendFunc(gl.ZERO, gl.SRC_ALPHA); gl.uniform4f(progF.u.uC, 0, 0, 0, keep); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  gl.blendEquation(gl.FUNC_REVERSE_SUBTRACT); gl.blendFunc(gl.ONE, gl.ONE); gl.uniform4f(progF.u.uC, 3 / 255, 3 / 255, 3 / 255, 0); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  gl.disableVertexAttribArray(aq);
+  // particles, additive
+  gl.blendEquation(gl.FUNC_ADD); gl.blendFunc(gl.ONE, gl.ONE);
+  gl.useProgram(progP.p);
+  gl.uniformMatrix4fv(progP.u.uVP, false, VP);
+  gl.uniform1f(progP.u.uSize, 2.2 * (fbH / 900) * CAM_DIST * (cssW < cssH ? 1.35 : 1));
+  gl.uniform1f(progP.u.uBright, Math.min(1.6, 0.9 * Math.sqrt(MAX_P / active)) * (1 + pulse * 0.5));
+  gl.bindBuffer(gl.ARRAY_BUFFER, bufP); gl.bufferSubData(gl.ARRAY_BUFFER, 0, pos.subarray(0, active * 4));
+  const ap = progP.a("aPos"), as = progP.a("aSeed");
+  gl.enableVertexAttribArray(ap); gl.vertexAttribPointer(ap, 4, gl.FLOAT, false, 0, 0);
+  gl.bindBuffer(gl.ARRAY_BUFFER, bufS); gl.enableVertexAttribArray(as); gl.vertexAttribPointer(as, 1, gl.FLOAT, false, 0, 0);
+  gl.drawArrays(gl.POINTS, 0, active);
+  gl.disableVertexAttribArray(ap); gl.disableVertexAttribArray(as);
+  gl.disable(gl.BLEND);
+  // composite to screen
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.viewport(0, 0, canvas.width, canvas.height);
+  gl.useProgram(progC.p);
+  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex); gl.uniform1i(progC.u.uTex, 0);
+  gl.uniform2f(progC.u.uPx, 1 / fbW, 1 / fbH); const core = project(comX, comY, comZ, VP);
+  gl.uniform2f(progC.u.uCore, core[0], core[1]); gl.uniform1f(progC.u.uAsp, cssW / cssH); gl.uniform1f(progC.u.uPulse, pulse);
+  gl.bindBuffer(gl.ARRAY_BUFFER, bufQ); const ac2 = progC.a("aQ"); gl.enableVertexAttribArray(ac2); gl.vertexAttribPointer(ac2, 2, gl.FLOAT, false, 0, 0);
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4); gl.disableVertexAttribArray(ac2);
+}
+
+// ================= loop + adaptive quality =================
+const readout = document.getElementById("readout");
+let lastT = 0, slow = 0, fast = 0, frames = 0, glLost = false, lastRead = "";
+function frame(now) {
+  requestAnimationFrame(frame);
+  if (glLost) return;
+  const dt = Math.min(1 / 30, Math.max(0.001, (now - lastT) / 1000)); lastT = now;
+  simulate(dt); render(dt); audioTick(); frames++;
+  if (!lockQ && document.visibilityState === "visible") {
+    if (dt > 0.024) { slow++; fast = 0; } else if (dt < 0.0175) { fast++; slow = Math.max(0, slow - 1); }
+    if (slow > 40) { slow = 0; // alternate: fewer particles, then lower resolution
+      if (active > MIN_P && (active > N * 0.6 || scale <= 0.6)) active = Math.max(MIN_P, Math.round(active * 0.8));
+      else if (scale > 0.5) { scale = Math.max(0.5, scale - 0.1); resize(); } }
+    if (fast > 240) { fast = 0; if (scale < 1) { scale = Math.min(1, scale + 0.05); resize(); } else if (active < N) active = Math.min(N, Math.round(active * 1.1)); }
+  }
+  if (frames % 10 === 0) { const txt = `PARTICLES ${active.toLocaleString("en-US")} · ENERGY ${Math.round(energy * 100)}`; if (txt !== lastRead) { readout.textContent = txt; lastRead = txt; } }
+}
+
+// ================= sound (Web Audio, synthesized, no files) =================
+let ac = null, au = null, soundOn = localStorage.getItem("nebula-sound") !== "off";
+const mtof = m => 440 * Math.pow(2, (m - 69) / 12), PENTA = [0, 3, 5, 7, 10];
+function buildAudio() {
+  const AC = window.AudioContext || window.webkitAudioContext; ac = new AC(); const t = ac.currentTime;
+  const master = ac.createGain(); master.gain.value = 0;
+  const comp = ac.createDynamicsCompressor(); comp.threshold.value = -16; comp.ratio.value = 4; master.connect(comp); comp.connect(ac.destination);
+  const verb = ac.createConvolver(), len = ac.sampleRate * 4.5, ir = ac.createBuffer(2, len, ac.sampleRate);
+  for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.4); }
+  verb.buffer = ir; const wet = ac.createGain(); wet.gain.value = 0.75; verb.connect(wet); wet.connect(master);
+  // deep space drone; its filter opens with the cloud's energy
+  const lp = ac.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 300; lp.Q.value = 3;
+  const drone = ac.createGain(); drone.gain.value = 0.035; lp.connect(drone); drone.connect(master); drone.connect(verb);
+  for (const [m, det] of [[28, 0], [40, -8], [40, 8], [47, 5], [52, -4]]) { const o = ac.createOscillator(); o.type = "sawtooth"; o.frequency.value = mtof(m); o.detune.value = det; const g = ac.createGain(); g.gain.value = m < 30 ? 0.5 : 0.25; o.connect(g); g.connect(lp); o.start(t); }
+  // high shimmer
+  const sh = ac.createGain(); sh.gain.value = 0.006; sh.connect(verb);
+  for (const m of [76, 83, 88]) { const o = ac.createOscillator(); o.frequency.value = mtof(m); const tr = ac.createOscillator(); tr.frequency.value = 0.1 + Math.random() * 0.2; const tg = ac.createGain(); tg.gain.value = 0.5; const g = ac.createGain(); g.gain.value = 0.5; tr.connect(tg); tg.connect(g.gain); o.connect(g); g.connect(sh); o.start(t); tr.start(t); }
+  // touch voice: glassy tone that follows the finger height, quantised to E minor pentatonic
+  const tv = ac.createOscillator(); tv.type = "triangle"; const tv2 = ac.createOscillator(); tv2.type = "sine";
+  const vib = ac.createOscillator(); vib.frequency.value = 5; const vg = ac.createGain(); vg.gain.value = 6; vib.connect(vg); vg.connect(tv.detune); vg.connect(tv2.detune);
+  const tg = ac.createGain(); tg.gain.value = 0; tv.connect(tg); tv2.connect(tg); tg.connect(master); tg.connect(verb); tv.start(t); tv2.start(t); vib.start(t);
+  // swirl wind
+  const nb = ac.createBuffer(1, ac.sampleRate * 3, ac.sampleRate), nd = nb.getChannelData(0); let p = 0; for (let i = 0; i < nd.length; i++) { const w = Math.random() * 2 - 1; p = 0.98 * p + 0.02 * w; nd[i] = p * 5 + w * 0.2; }
+  const ns = ac.createBufferSource(); ns.buffer = nb; ns.loop = true; const bp = ac.createBiquadFilter(); bp.type = "bandpass"; bp.Q.value = 1.4; bp.frequency.value = 600;
+  const wind = ac.createGain(); wind.gain.value = 0; ns.connect(bp); bp.connect(wind); wind.connect(master); wind.connect(verb); ns.start(t);
+  au = { master, verb, lp, tv, tv2, tg, bp, wind };
+  setMaster();
+}
+function setMaster() { if (au) au.master.gain.setTargetAtTime(soundOn ? 0.9 : 0, ac.currentTime, 0.5); }
+function toggleSound() { soundOn = !soundOn; localStorage.setItem("nebula-sound", soundOn ? "on" : "off"); document.getElementById("sound").setAttribute("aria-pressed", soundOn); setMaster(); }
+document.getElementById("sound").addEventListener("click", toggleSound);
+document.getElementById("sound").setAttribute("aria-pressed", soundOn);
+let touching = false;
+function touchSound(on) { touching = on; if (!au) return; au.tg.gain.setTargetAtTime(on ? 0.035 : 0, ac.currentTime, on ? 0.08 : 0.5); }
+function boom(vel) {
+  if (!au || !soundOn) return; const t = ac.currentTime;
+  const o = ac.createOscillator(), g = ac.createGain(); o.frequency.setValueAtTime(130, t); o.frequency.exponentialRampToValueAtTime(32, t + 1.2);
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.22 * vel, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.8);
+  o.connect(g); g.connect(au.master); g.connect(au.verb); o.start(t); o.stop(t + 1.9);
+  au.wind.gain.setTargetAtTime(0.12 * vel, t, 0.02); au.wind.gain.setTargetAtTime(0.02, t + 0.3, 0.6);
+}
+function audioTick() {
+  if (!au) return; const t = ac.currentTime, e = Math.min(2, energy);
+  au.lp.frequency.setTargetAtTime(180 + e * 900 + pulse * 1500, t, 0.25);
+  au.wind.gain.setTargetAtTime(Math.min(0.09, 0.01 + Math.max(0, e - 0.3) * 0.05 + (ptrs.size ? 0.02 : 0)), t, 0.3);
+  au.bp.frequency.setTargetAtTime(300 + e * 1200, t, 0.3);
+  if (ptrs.size) { const p = ptrs.values().next().value; const h = 1 - p.y / cssH, step = Math.floor(h * 10), m = 64 + PENTA[step % 5] + 12 * Math.floor(step / 5) - (p.repel || ptrs.size > 1 ? 12 : 0);
+    au.tv.frequency.setTargetAtTime(mtof(m), t, 0.04); au.tv2.frequency.setTargetAtTime(mtof(m + 12), t, 0.04); }
+}
+document.addEventListener("visibilitychange", () => { if (!ac) return; if (document.hidden) ac.suspend(); else ac.resume(); });
+
+// ================= start =================
+document.getElementById("go").addEventListener("click", () => {
+  try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch (_) {}
+  if (!ac) buildAudio(); ac.resume();
+  const msg = document.getElementById("msg"), DOE = window.DeviceOrientationEvent;
+  const done = () => { document.getElementById("start").remove(); started = true; pulse = 0.6;
+    setTimeout(() => { if (!haveSensor) document.getElementById("note").textContent = "MOUSE / ARROWS = GRAVITY · DRAG = VORTEX · RIGHT-DRAG OR SHIFT = REPEL · DOUBLE-CLICK = NOVA · B = BIG BANG"; }, 800); };
+  if (DOE && typeof DOE.requestPermission === "function") {
+    DOE.requestPermission().then(r => { if (r === "granted") addEventListener("deviceorientation", onOrient); else msg.textContent = "Motion off. Touch still works."; done(); })
+      .catch(() => { msg.textContent = "Motion unavailable. Touch still works."; done(); });
+  } else { addEventListener("deviceorientation", onOrient); done(); }
+});
+
+// ================= boot =================
+canvas.addEventListener("webglcontextlost", e => { e.preventDefault(); glLost = true; tex = null; fbo = null; });
+canvas.addEventListener("webglcontextrestored", () => { initGL(); glLost = false; });
+if (!gl) { document.getElementById("nogl").hidden = false; document.getElementById("start").remove(); }
+else {
+  initField(); resize(); initGL();
+  for (let i = 0; i < 90; i++) simulate(1 / 60);   // let the cloud settle into the flow before the first frame
+  requestAnimationFrame(t => { lastT = t; requestAnimationFrame(frame); });
+}
+window.nebula = { stats: () => ({ w: canvas.width, h: canvas.height, scale, active, energy, tiltX, tiltY, pointers: ptrs.size }),
+  bench: n => { const t = performance.now(); for (let i = 0; i < n; i++) simulate(1 / 60); return (performance.now() - t) / n; } };
+</script>
+</body>
+</html>
