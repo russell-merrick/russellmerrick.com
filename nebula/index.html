@@ -52,13 +52,14 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-famil
 #start .alt{color:var(--dim);font:400 11px "IBM Plex Mono",monospace;letter-spacing:.14em;text-transform:uppercase}
 #start .alt a{color:var(--dim);text-decoration:none;border-bottom:1px solid var(--border)}
 @media (max-width:420px){.exps a{padding:4px 6px;letter-spacing:.06em}#hud .right{gap:6px}}
+@media (max-width:560px){#hud .right{flex-wrap:wrap;justify-content:flex-end;row-gap:8px;width:100%}.exps{width:100%}.exps a{flex:1;text-align:center;padding:4px 0;letter-spacing:.03em}}
 </style>
 </head>
 <body>
 <canvas id="gl" aria-label="Particle nebula. Tilt to pull the cloud, touch to swirl it."></canvas>
 <div id="hud"><span><span class="long">RUSSELL MERRICK / </span><b class="long">NEBULA</b></span><span id="readout">PARTICLES 0</span>
   <span class="right">
-    <nav class="exps" aria-label="Experiences"><a href="../">BASS</a><a href="../garden/">GARDEN</a><a href="../dream/">DREAM</a><a href="./" aria-current="page">NEBULA</a></nav>
+    <nav class="exps" aria-label="Experiences"><a href="../">BASS</a><a href="../garden/">GARDEN</a><a href="../dream/">DREAM</a><a href="./" aria-current="page">NEBULA</a><a href="../bubbler/">BUBBLER</a><a href="../avatar/">AVATAR</a></nav>
     <button id="recenter" class="chip" title="Make the current angle level"><span class="long">RECENTER</span><span class="short">⟲</span></button>
     <a class="chip accent" href="../about/"><span class="long">ENTER SITE →</span><span class="short">SITE →</span></a>
   </span></div>
@@ -75,7 +76,7 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-famil
   <button id="go">Tap to start</button>
   <p id="msg" style="text-transform:none;letter-spacing:.04em"></p>
   <a id="skip" href="../about/">Skip to site →</a>
-  <span class="alt">or try the <a href="../">tilt bass</a> · <a href="../garden/">sand garden</a> · <a href="../dream/">dream</a></span>
+  <span class="alt">or try the <a href="../">tilt bass</a> · <a href="../garden/">sand garden</a> · <a href="../dream/">dream</a> · <a href="../bubbler/">bubbler</a> · <a href="../avatar/">avatar</a></span>
 </div>
 <div id="nogl" hidden>This one needs WebGL, which this browser has turned off. Try the <a href="../garden/">sand garden</a> or <a href="../about/">enter the site</a>.</div>
 <script>

@@ -58,6 +58,7 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-famil
 #go{appearance:none;border:0;border-radius:999px;background:var(--accent);color:#1a1308;font:500 16px "IBM Plex Sans",sans-serif;padding:16px 34px;box-shadow:0 0 40px -6px var(--glow);cursor:pointer}
 #note{position:fixed;left:16px;bottom:calc(min(34vh,190px) + 10px);font:400 11px "IBM Plex Mono",monospace;letter-spacing:.12em;color:var(--dim);pointer-events:none}
 @media (max-width:420px){.exps a{padding:4px 6px;letter-spacing:.06em}#hud .right{gap:6px}}
+@media (max-width:560px){#hud .right{flex-wrap:wrap;justify-content:flex-end;row-gap:8px;width:100%}.exps{width:100%}.exps a{flex:1;text-align:center;padding:4px 0;letter-spacing:.03em}}
 </style>
 </head>
 <body>
@@ -65,7 +66,7 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-famil
 <div id="hud"><span><span class="long">RUSSELL MERRICK / </span><b class="long">TILT BASS</b></span><span id="readout">—</span>
   <span class="right">
     <span id="loopctl"><button id="loopbtn" class="chip" aria-pressed="true" title="Backing track on/off">BEAT</button><input id="loopvol" type="range" min="0" max="1" step="0.01" value="0.7" aria-label="Backing track volume"></span>
-    <nav class="exps" aria-label="Experiences"><a href="./" aria-current="page">BASS</a><a href="garden/">GARDEN</a><a href="dream/">DREAM</a><a href="nebula/">NEBULA</a></nav>
+    <nav class="exps" aria-label="Experiences"><a href="./" aria-current="page">BASS</a><a href="garden/">GARDEN</a><a href="dream/">DREAM</a><a href="nebula/">NEBULA</a><a href="bubbler/">BUBBLER</a><a href="avatar/">AVATAR</a></nav>
     <button id="recenter" class="chip"><span class="long">RECENTER</span><span class="short">⟲</span></button>
     <a class="chip accent" href="about/"><span class="long">ENTER SITE →</span><span class="short">SITE →</span></a>
   </span></div>
@@ -82,7 +83,7 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-famil
   <button id="go">Tap to start</button>
   <p id="msg" style="text-transform:none;letter-spacing:.04em"></p>
   <a id="skip" href="about/">Skip to site →</a>
-  <span class="alt">or try the <a href="garden/">sand garden</a> · <a href="dream/">dream</a> · <a href="nebula/">nebula</a></span>
+  <span class="alt">or try the <a href="garden/">sand garden</a> · <a href="dream/">dream</a> · <a href="nebula/">nebula</a> · <a href="bubbler/">bubbler</a> · <a href="avatar/">avatar</a></span>
 </div>
 <script>
 "use strict";
