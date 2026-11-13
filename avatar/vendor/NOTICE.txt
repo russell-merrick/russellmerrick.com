@@ -1,0 +1,13 @@
+Vendored third-party files (served from this site; no CDN):
+
+vision_bundle.mjs, wasm/vision_wasm_internal.js, wasm/vision_wasm_internal.wasm
+  @mediapipe/tasks-vision 1.2.3 (https://www.npmjs.com/package/@mediapipe/tasks-vision)
+  Copyright Google LLC. Licensed under the Apache License 2.0 (LICENSE-tasks-vision.txt).
+  Modification: vision_bundle.mjs has its usage-statistics logger disabled so the page
+  never contacts odml.pa.googleapis.com. The page also sets a Content-Security-Policy
+  that only allows connections back to this site.
+
+face_landmarker.task
+  MediaPipe Face Landmarker model (float16, v1), from
+  https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task
+  Licensed under the Apache License 2.0 (see the MediaPipe model card).
