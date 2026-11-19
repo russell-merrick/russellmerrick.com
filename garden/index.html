@@ -3,66 +3,102 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<meta name="theme-color" content="#0b0d12">
+<meta name="theme-color" content="#07080d">
 <title>Russell Merrick — Sand Garden</title>
-<meta name="description" content="A tilt-and-rake zen sand garden in your browser. Music, Nandland, and projects inside.">
+<meta name="description" content="Rake slow lines at golden hour. Tilt your phone and the whole garden pours.">
 <meta name="author" content="Russell Merrick">
-<link rel="canonical" href="https://russellmerrick.com/garden/">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Russell Merrick">
 <meta property="og:title" content="Russell Merrick — Sand Garden">
-<meta property="og:description" content="Rake the sand. Tilt your phone and watch it pour.">
-<meta property="og:url" content="https://russellmerrick.com/garden/">
+<meta property="og:description" content="Rake slow lines at golden hour. Tilt your phone and the whole garden pours.">
 <meta property="og:image" content="https://russellmerrick.com/og-image.png">
 <meta name="twitter:card" content="summary_large_image">
 <style>
 @font-face{font-family:"IBM Plex Sans";font-weight:500;font-display:swap;src:url(../fonts/ibm-plex-sans-500.woff2) format("woff2")}
 @font-face{font-family:"IBM Plex Mono";font-weight:400;font-display:swap;src:url(../fonts/ibm-plex-mono-400.woff2) format("woff2")}
-:root{--bg:#0b0d12;--elev:#14161c;--border:#2a2f3a;--text:#e8eaef;--dim:#9aa1b3;--accent:#e8a23a;--glow:rgba(232,162,58,.35)}
+:root{
+  --bg:#07080d; --ink:#0b0d12;
+  --glass:rgba(12,14,22,.38); --glass-strong:rgba(12,14,22,.56);
+  --border:rgba(255,255,255,.10); --border-hi:rgba(255,196,120,.55);
+  --text:#f3eee6; --dim:rgba(236,228,214,.60); --faint:rgba(236,228,214,.38);
+  --accent:#e8a23a; --gold:#ffd08a; --sun:#ff8a3d; --rose:#ff5e7a; --violet:#b07cff; --sky:#7aa2ff;
+  --grad:linear-gradient(100deg,#ffe2b0 0%,#f5b04a 30%,#ff7a4a 58%,#ff5e7a 78%,#b07cff 100%);
+  --glow:rgba(232,162,58,.45);
+  --mono:"IBM Plex Mono",ui-monospace,monospace; --sans:"IBM Plex Sans",system-ui,sans-serif;
+}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:"IBM Plex Sans",system-ui,sans-serif;overflow:hidden;overscroll-behavior:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
-#sand{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
-#hud{position:fixed;top:0;left:0;right:0;padding:max(12px,env(safe-area-inset-top)) 16px 22px;display:flex;justify-content:space-between;align-items:center;gap:8px;white-space:nowrap;font:400 11px/1.4 "IBM Plex Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);pointer-events:none;background:linear-gradient(180deg,rgba(11,13,18,.72),rgba(11,13,18,0))}
-#hud b{color:var(--accent);font-weight:400}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);overflow:hidden;overscroll-behavior:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+canvas.stage{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#sand{cursor:crosshair}
+#sand.gl.finecursor{cursor:none}
+
+/* ---------- HUD ---------- */
+#hud{position:fixed;z-index:3;top:max(12px,env(safe-area-inset-top));left:14px;right:14px;display:flex;justify-content:space-between;align-items:center;gap:8px;white-space:nowrap;font:400 11px/1.4 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--dim);pointer-events:none}
+#hud .brand{display:flex;align-items:center;gap:9px}
+#hud .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px 2px var(--glow);animation:breathe 3.2s ease-in-out infinite}
+#hud b{font-weight:400;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+#readout{color:var(--faint);font-variant-numeric:tabular-nums}
 #hud .right{display:flex;gap:8px;align-items:center;pointer-events:auto}
-.chip{background:rgba(11,13,18,.35);border:1px solid var(--border);color:var(--dim);font:inherit;letter-spacing:inherit;text-transform:inherit;padding:4px 8px;border-radius:6px;text-decoration:none;cursor:pointer;line-height:1.4}
-.chip:hover,.chip:focus-visible{color:var(--text);border-color:#3a4150;outline:none}
-.chip.accent{color:var(--accent);border-color:rgba(232,162,58,.5)}
-.chip.accent:hover,.chip.accent:focus-visible{background:var(--accent);color:#1a1308}
+.chip{appearance:none;background:var(--glass);-webkit-backdrop-filter:blur(12px) saturate(140%);backdrop-filter:blur(12px) saturate(140%);border:1px solid var(--border);color:var(--dim);font:inherit;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;padding:5px 10px;border-radius:999px;text-decoration:none;cursor:pointer;transition:color .2s,border-color .2s,background .2s,box-shadow .2s}
+.chip:hover,.chip:focus-visible{color:var(--text);border-color:rgba(255,255,255,.22);outline:none}
+.chip.accent{color:var(--gold);border-color:rgba(232,162,58,.45)}
+.chip.accent:hover,.chip.accent:focus-visible{background:var(--accent);color:#1a1006;box-shadow:0 0 22px -4px var(--glow)}
 .chip[aria-pressed="false"]{opacity:.55;text-decoration:line-through}
-/* experience switcher: add future experiences as more <a> entries */
-.exps{display:flex;border:1px solid var(--border);border-radius:6px;overflow:hidden;background:rgba(11,13,18,.35)}
-.exps a{color:var(--dim);text-decoration:none;padding:4px 8px;line-height:1.4}
-.exps a+a{border-left:1px solid var(--border)}
-.exps a:hover,.exps a:focus-visible{color:var(--text);outline:none}
-.exps a[aria-current="page"]{color:#1a1308;background:var(--accent)}
-#bar{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:space-between;align-items:flex-end;gap:10px;padding:26px max(16px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));font:400 11px/1.5 "IBM Plex Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);pointer-events:none;background:linear-gradient(0deg,rgba(11,13,18,.6),rgba(11,13,18,0))}
-#bar .tools{display:flex;gap:8px;pointer-events:auto}
-#note{max-width:64ch}
-@media (max-width:560px){#hud .long,#readout{display:none}#bar{flex-direction:column;align-items:stretch}#note{font-size:9.5px;letter-spacing:.08em;text-align:center;max-width:none}#bar .tools{justify-content:center}}
-@media (min-width:561px){#hud .short{display:none}#note{white-space:nowrap}}
-#start{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:radial-gradient(ellipse 60% 45% at 50% 45%,rgba(11,13,18,.82),rgba(11,13,18,.45) 70%,rgba(11,13,18,.2));z-index:5;text-align:center;padding:24px}
-#start h1{margin:0;font-weight:500;font-size:clamp(30px,7vw,52px);letter-spacing:-.01em;text-shadow:0 2px 30px rgba(0,0,0,.6)}
-#start p{margin:0;color:#c5cad6;font:400 12px/1.7 "IBM Plex Mono",monospace;letter-spacing:.12em;text-transform:uppercase;max-width:36ch;text-shadow:0 1px 12px rgba(0,0,0,.8)}
-#go{appearance:none;border:0;border-radius:999px;background:var(--accent);color:#1a1308;font:500 16px "IBM Plex Sans",sans-serif;padding:16px 34px;box-shadow:0 0 40px -6px var(--glow);cursor:pointer}
-#skip{color:var(--dim);font:400 11px "IBM Plex Mono",monospace;letter-spacing:.14em;text-transform:uppercase;text-decoration:none;border-bottom:1px solid var(--border);padding-bottom:2px}
-#skip:hover{color:var(--accent)}
-#start .alt{color:var(--dim);font:400 11px "IBM Plex Mono",monospace;letter-spacing:.14em;text-transform:uppercase}
-#start .alt a{color:var(--dim);text-decoration:none;border-bottom:1px solid var(--border)}
-@media (max-width:420px){.exps a{padding:4px 6px;letter-spacing:.06em}#hud .right{gap:6px}}
-@media (max-width:560px){#hud .right{flex-wrap:wrap;justify-content:flex-end;row-gap:8px;width:100%}.exps{width:100%}.exps a{flex:1;text-align:center;padding:4px 0;letter-spacing:.03em}}
-@media (min-width:561px) and (max-width:1000px){#hud>span:first-child{display:none}#readout{display:none}.exps a{padding:4px 7px;letter-spacing:.08em}}
+.exps{display:flex;padding:2px;gap:2px;border-radius:999px;background:var(--glass);-webkit-backdrop-filter:blur(12px) saturate(140%);backdrop-filter:blur(12px) saturate(140%);border:1px solid var(--border)}
+.exps a{color:var(--dim);text-decoration:none;padding:3px 10px;line-height:1.4;border-radius:999px;transition:color .2s,background .2s}
+.exps a:hover,.exps a:focus-visible{color:var(--text);background:rgba(255,255,255,.06);outline:none}
+.exps a[aria-current="page"]{color:#1a1006;background:var(--grad);box-shadow:0 0 18px -4px var(--glow)}
+
+/* ---------- bottom bar ---------- */
+#bar{position:fixed;z-index:3;left:14px;right:14px;bottom:max(14px,env(safe-area-inset-bottom));display:flex;justify-content:space-between;align-items:flex-end;gap:12px;pointer-events:none}
+#note{font:400 10.5px/1.6 var(--mono);letter-spacing:.14em;color:var(--faint);text-transform:uppercase;max-width:62ch;text-shadow:0 1px 8px rgba(0,0,0,.6)}
+#bar .tools{display:flex;gap:8px;pointer-events:auto;flex-shrink:0}
+
+/* ---------- start card: glass over the live scene ---------- */
+#start{position:fixed;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(ellipse 80% 70% at 50% 50%,rgba(7,8,13,0) 0%,rgba(7,8,13,.35) 55%,rgba(7,8,13,.82) 100%);transition:opacity .8s ease,filter .8s ease,transform .8s cubic-bezier(.2,.7,.2,1)}
+#start.leaving{opacity:0;filter:blur(10px);transform:scale(1.06);pointer-events:none}
+#start .card{position:relative;max-width:520px;width:100%;text-align:center;padding:34px 30px 26px;border-radius:28px;background:linear-gradient(180deg,rgba(18,20,30,.42),rgba(10,11,18,.58));-webkit-backdrop-filter:blur(18px) saturate(150%);backdrop-filter:blur(18px) saturate(150%);border:1px solid var(--border);box-shadow:0 30px 80px -30px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.06);animation:rise .9s cubic-bezier(.2,.7,.2,1) both}
+#start .card::before{content:"";position:absolute;inset:-1px;border-radius:inherit;padding:1px;background:linear-gradient(140deg,rgba(255,210,150,.45),rgba(255,255,255,.04) 35%,rgba(255,255,255,0) 60%,rgba(176,124,255,.35));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+#start .kicker{font:400 10.5px var(--mono);letter-spacing:.28em;text-transform:uppercase;color:var(--faint);margin:0 0 14px}
+#start .kicker span{color:var(--gold)}
+#start h1{margin:0 0 10px;font-weight:500;font-size:clamp(44px,10vw,84px);line-height:.95;letter-spacing:-.035em;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 28px rgba(255,140,70,.28))}
+#start .tag{margin:0 auto 14px;max-width:30ch;font:500 17px/1.45 var(--sans);color:rgba(243,238,230,.86)}
+#start .howto{margin:0 auto 22px;max-width:40ch;font:400 11px/1.75 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+#go{position:relative;overflow:hidden;appearance:none;border:0;border-radius:999px;background:var(--grad);color:#1a1006;font:500 17px var(--sans);letter-spacing:.01em;padding:16px 38px;cursor:pointer;box-shadow:0 10px 40px -10px rgba(255,120,60,.7),0 0 0 1px rgba(255,255,255,.15) inset;transition:transform .2s cubic-bezier(.2,.7,.2,1),box-shadow .2s}
+#go:hover,#go:focus-visible{transform:translateY(-1px) scale(1.03);box-shadow:0 14px 50px -10px rgba(255,120,60,.9),0 0 0 1px rgba(255,255,255,.25) inset;outline:none}
+#go::after{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.55),transparent);transform:skewX(-20deg);animation:shine 3.6s ease-in-out infinite}
+#msg{min-height:1em;margin:12px 0 0;font:400 12px var(--mono);letter-spacing:.04em;color:var(--dim)}
+#start .links{margin-top:14px;display:flex;flex-direction:column;gap:10px;align-items:center;font:400 10.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+#start .links a{color:var(--dim);text-decoration:none;border-bottom:1px solid rgba(255,255,255,.14);padding-bottom:1px;transition:color .2s,border-color .2s}
+#start .links a:hover{color:var(--gold);border-color:var(--accent)}
+#nogl{position:fixed;inset:0;z-index:6;display:flex;align-items:center;justify-content:center;padding:30px;text-align:center;font:400 13px/1.7 var(--mono);color:var(--dim)}
+#nogl a{color:var(--gold)}
+[hidden]{display:none!important}
+@keyframes rise{from{opacity:0;transform:translateY(18px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes shine{0%,55%{left:-60%}85%,100%{left:130%}}
+@keyframes breathe{0%,100%{opacity:.55;transform:scale(.85)}50%{opacity:1;transform:scale(1.1)}}
+@media (prefers-reduced-motion:reduce){#go::after,#hud .dot{animation:none}#start .card{animation:none}}
+
+/* ---------- small screens (mirrors the live site's breakpoints) ---------- */
+@media (min-width:521px){#hud .short{display:none}}
+@media (max-width:520px){#readout,#hud .long{display:none}#note{font-size:9px}}
+@media (max-width:560px){#hud .right{flex-wrap:wrap;justify-content:flex-end;row-gap:8px;width:100%}.exps{width:100%}.exps a{flex:1;text-align:center;padding:4px 0;letter-spacing:.03em}#bar{flex-direction:column;align-items:stretch}#bar .tools{justify-content:flex-end}#note{text-align:center;letter-spacing:.08em}}
+@media (min-width:561px) and (max-width:1000px){#hud .brand{display:none}.exps a{padding:3px 7px;letter-spacing:.08em}}
+@media (max-height:460px){#start{padding:12px;overflow-y:auto}#start .card{max-width:660px;padding:16px 26px 14px;margin:auto}#start .kicker{margin-bottom:6px}#start h1{font-size:40px;margin-bottom:6px}#start .tag{max-width:46ch;font-size:14px;margin-bottom:6px}#start .howto{max-width:72ch;font-size:10px;line-height:1.6;margin-bottom:10px}#go{padding:11px 30px;font-size:15px}#msg{margin-top:6px}#start .links{margin-top:6px;flex-direction:row;flex-wrap:wrap;justify-content:center;gap:4px 14px}}
 </style>
 </head>
 <body>
-<canvas id="sand" aria-label="Sand garden. Drag to rake, tilt to pour."></canvas>
-<div id="hud"><span><span class="long">RUSSELL MERRICK / </span><b class="long">SAND GARDEN</b></span><span id="readout">LEVEL</span>
+<canvas id="sand" class="stage" aria-label="Sand garden at golden hour. Drag to rake, tap for a ripple, tilt to pour."></canvas>
+<div id="hud">
+  <span class="brand"><span class="dot"></span><span class="long">RUSSELL MERRICK / <b>SAND GARDEN</b></span></span>
+  <span id="readout">LEVEL</span>
   <span class="right">
-    <nav class="exps" aria-label="Experiences"><a href="../">BASS</a><a href="./" aria-current="page">GARDEN</a><a href="../dream/">DREAM</a><a href="../nebula/">NEBULA</a><a href="../bubbler/">BUBBLER</a></nav>
+    <nav class="exps" aria-label="Experiences"><a href="../">BASS</a><a href="./" aria-current="page">GARDEN</a><a href="../dream/">DREAM</a><a href="../nebula/">NEBULA</a></nav>
     <button id="recenter" class="chip" title="Make the current angle level"><span class="long">RECENTER</span><span class="short">⟲</span></button>
-    <a class="chip accent" href="../about/"><span class="long">ENTER SITE →</span><span class="short">SITE →</span></a>
-  </span></div>
+    <a class="chip accent" href="https://russellmerrick.com/about/"><span class="long">ENTER SITE →</span><span class="short">SITE →</span></a>
+  </span>
+</div>
 <div id="bar">
   <span id="note">DRAG = RAKE · TAP = RIPPLE · TILT = POUR · SHAKE = SMOOTH</span>
   <span class="tools">
@@ -72,16 +108,33 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-famil
   </span>
 </div>
 <div id="start">
-  <h1>Sand Garden</h1>
-  <p>Drag to rake. Tap for a ripple. Tilt your phone to let the sand pour. Sound is soft and optional.</p>
-  <button id="go">Tap to start</button>
-  <p id="msg" style="text-transform:none;letter-spacing:.04em"></p>
-  <a id="skip" href="../about/">Skip to site →</a>
-  <span class="alt">or try the <a href="../">tilt bass</a> · <a href="../dream/">dream</a> · <a href="../nebula/">nebula</a> · <a href="../bubbler/">bubbler</a></span>
+  <div class="card">
+    <p class="kicker">Russell Merrick · <span>02 / 05</span></p>
+    <h1>Sand Garden</h1>
+    <p class="tag">Rake slow lines at golden hour. Tilt, and the whole garden pours.</p>
+    <p class="howto">Drag to rake · tap for a ripple · tilt your phone to pour · shake to smooth · sound is soft and optional</p>
+    <button id="go">Tap to begin</button>
+    <p id="msg"></p>
+    <div class="links">
+      <a href="https://russellmerrick.com/about/">Skip to site →</a>
+      <span>or wander to <a href="../">tilt bass</a> · <a href="../garden/">sand garden</a> · <a href="../dream/">dream</a> · <a href="../nebula/">nebula</a></span>
+    </div>
+  </div>
 </div>
+<div id="nogl" hidden>This one needs WebGL, which this browser has turned off. Try the <a href="../garden/">sand garden</a> or <a href="https://russellmerrick.com/about/">enter the site</a>.</div>
 <script>
 "use strict";
+// fade the start card away (instead of removing it instantly)
+function leaveStart() {
+  const s = document.getElementById("start"); if (!s) return;
+  s.classList.add("leaving");
+  setTimeout(() => s.remove(), 850);
+}
+
 // ================= config =================
+const params = new URLSearchParams(location.search);
+const coarse = matchMedia("(pointer:coarse)").matches;
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const TARGET_CELLS = 90000;   // sim resolution budget (heightfield cells)
 const MIN_CELL = 2;           // CSS px per cell, minimum
 const BASE = 6, AMP = 1.0;    // sand depth and groove depth (height units)
@@ -92,42 +145,47 @@ const TILT_K = 5.2;           // how strongly tilt adds to the downhill step
 const FLOW_RATE = 0.22, SUBSTEPS = 2;
 const DEAD = 3, FULL = 35;    // tilt deadzone / full-scale in degrees
 const DPR_CAP = 2;
+const HS = 0.62;              // world height (in cells) per height unit: sets how steep the grooves look to the light
+const HMAX = 64;              // packing range of the height texture
+const MAX_PIXELS = coarse ? 1.7e6 : 2.6e6;
+const PETALS = Math.round((coarse ? 54 : 80) * (params.has("petals") ? Math.max(0, Math.min(3, +params.get("petals"))) : 1));
 const D2R = Math.PI / 180, R2D = 180 / Math.PI, TAU = Math.PI * 2;
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
 const smoothstep = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
 function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 
-// ================= canvas + grid =================
-const cv = document.getElementById("sand"), g = cv.getContext("2d", { alpha: false });
-const off = document.createElement("canvas"), og = off.getContext("2d");          // sim-res shaded sand
-const stoneLayer = document.createElement("canvas"), sg = stoneLayer.getContext("2d"); // stones, drawn once per resize
+// ================= canvas: WebGL first, Canvas2D fallback =================
+const cv = document.getElementById("sand");
+const glAttr = { antialias: false, alpha: false, depth: false, stencil: false, premultipliedAlpha: false, preserveDrawingBuffer: false, powerPreference: "high-performance" };
+let gl = params.has("nogl") ? null : (cv.getContext("webgl", glAttr) || cv.getContext("experimental-webgl", glAttr));
+let g = null; // 2D context (fallback only)
+if (!gl) g = cv.getContext("2d", { alpha: false });
+if (gl) { cv.classList.add("gl"); if (matchMedia("(pointer:fine)").matches) cv.classList.add("finecursor"); }
+
+// ================= grid =================
 let cssW = 0, cssH = 0, dpr = 1, GW = 0, GH = 0, N = 0, sx = 1, sy = 1;
-let h, target, solid, floorCol, grain, img, px32, stones = [], portrait = false;
+let h, target, solid, stoneH, glow, stones = [], portrait = false;
+let scale = params.has("scale") ? clamp(+params.get("scale"), 0.3, 1) : (coarse ? 0.85 : 1), lockScale = params.has("scale");
 
 function buildGrid() {
   cssW = innerWidth; cssH = innerHeight; portrait = cssH > cssW;
   const cs = Math.max(MIN_CELL, Math.sqrt(cssW * cssH / TARGET_CELLS));
   GW = Math.round(cssW / cs); GH = Math.round(cssH / cs); N = GW * GH;
-  h = new Float32Array(N); target = new Float32Array(N); solid = new Uint8Array(N);
-  floorCol = new Uint32Array(N); grain = new Int8Array(N);
-  off.width = GW; off.height = GH; img = og.createImageData(GW, GH); px32 = new Uint32Array(img.data.buffer);
+  h = new Float32Array(N); target = new Float32Array(N); solid = new Uint8Array(N); stoneH = new Float32Array(N); glow = new Float32Array(N);
   makeStones(); makePattern(); h.set(target);
-  const r = rng(7);
-  for (let i = 0; i < N; i++) grain[i] = (r() * 9 - 4.5) | 0;
-  // hidden floor revealed when sand pours away: deep navy with a faint amber grid
-  for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) {
-    const gl = (x % 12 === 0 || y % 12 === 0) ? 1 : 0;
-    const R = gl ? 92 : 16, G = gl ? 62 : 19, B = gl ? 36 : 32;
-    floorCol[y * GW + x] = 0xff000000 | (B << 16) | (G << 8) | R;
-  }
+  if (gl) glGrid(); else grid2D();
   sizeCanvas();
+  for (const p of petals) if (p.x > cssW + 40 || p.y > cssH + 40) respawnPetal(p, false);
 }
 function sizeCanvas() {
   dpr = Math.min(DPR_CAP, devicePixelRatio || 1);
   cssW = innerWidth; cssH = innerHeight;
-  cv.width = Math.round(cssW * dpr); cv.height = Math.round(cssH * dpr);
+  let k = dpr;
+  if (gl) { const cap = Math.sqrt(MAX_PIXELS / (cssW * cssH * dpr * dpr)); k = dpr * Math.min(1, cap) * scale; }
+  cv.width = Math.max(2, Math.round(cssW * k)); cv.height = Math.max(2, Math.round(cssH * k));
   sx = cssW / GW; sy = cssH / GH;
-  drawStoneLayer(); dirty = true;
+  if (gl) glSize(); else drawStoneLayer();
+  dirty = true;
 }
 let rebuildT = 0;
 addEventListener("resize", () => {
@@ -146,13 +204,20 @@ function makeStones() {
     ? [[0.33, 0.34, 0.12, 0.5, 1.30, 0.82], [0.53, 0.27, 0.055, 1.3, 1.15, 0.9], [0.66, 0.65, 0.10, -0.3, 1.35, 0.8], [0.45, 0.74, 0.045, 0.9, 1.1, 0.95]]
     : [[0.26, 0.56, 0.095, 0.3, 1.35, 0.8], [0.355, 0.43, 0.048, 1.1, 1.2, 0.9], [0.68, 0.37, 0.08, -0.4, 1.3, 0.82], [0.755, 0.47, 0.036, 0.8, 1.1, 0.95], [0.555, 0.76, 0.042, 2.0, 1.25, 0.85]];
   const r = rng(42), m = Math.min(GW, GH);
-  stones = L.map(([fx, fy, fr, rot, ex, ey]) => ({ cx: fx * GW, cy: fy * GH, r: fr * m, rot, ex, ey, p1: r() * TAU, p2: r() * TAU, p3: r() * TAU }));
-  solid.fill(0);
+  stones = L.map(([fx, fy, fr, rot, ex, ey]) => ({ cx: fx * GW, cy: fy * GH, r: fr * m, rot, ex, ey, p1: r() * TAU, p2: r() * TAU, p3: r() * TAU, glow: 0 }));
+  solid.fill(0); stoneH.fill(0);
   for (const s of stones) {
-    const R = s.r * Math.max(s.ex, s.ey) * 1.3 + 2;
+    const R = s.r * Math.max(s.ex, s.ey) * 1.3 + 2, rad = s.r * (s.ex + s.ey) * 0.5;
     for (let y = Math.max(0, (s.cy - R) | 0); y < Math.min(GH, s.cy + R); y++)
-      for (let x = Math.max(0, (s.cx - R) | 0); x < Math.min(GW, s.cx + R); x++)
-        if (stoneDist(s, x + 0.5, y + 0.5) < 0) solid[y * GW + x] = 1;
+      for (let x = Math.max(0, (s.cx - R) | 0); x < Math.min(GW, s.cx + R); x++) {
+        const d = stoneDist(s, x + 0.5, y + 0.5);
+        if (d < 0) {
+          const i = y * GW + x; solid[i] = 1;
+          // dome height for the light: the stones cast long shadows across the sand at golden hour
+          const depth = clamp(-d / rad, 0, 1), dome = Math.sqrt(1 - (1 - depth) * (1 - depth));
+          stoneH[i] = Math.max(stoneH[i], BASE + 0.6 + dome * rad * 0.42 / HS);
+        }
+      }
   }
 }
 function stoneRad(s, a) { return s.r * (1 + 0.10 * Math.sin(3 * a + s.p1) + 0.06 * Math.sin(5 * a + s.p2) + 0.03 * Math.sin(7 * a + s.p3)); }
@@ -161,45 +226,7 @@ function stoneDist(s, x, y) { // approximate signed distance in cells
   const lx = (dx * c + dy * sn) / s.ex, ly = (-dx * sn + dy * c) / s.ey;
   return (Math.hypot(lx, ly) - stoneRad(s, Math.atan2(ly, lx))) * (s.ex + s.ey) * 0.5;
 }
-function stonePath(ctx, s, k) {
-  const c = Math.cos(s.rot), sn = Math.sin(s.rot);
-  ctx.beginPath();
-  for (let i = 0; i <= 72; i++) {
-    const a = i / 72 * TAU, R = stoneRad(s, a) + 0.35, lx = Math.cos(a) * R * s.ex, ly = Math.sin(a) * R * s.ey;
-    const X = (s.cx + lx * c - ly * sn) * sx * k, Y = (s.cy + lx * sn + ly * c) * sy * k;
-    i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y);
-  }
-  ctx.closePath();
-}
-function drawStoneLayer() {
-  stoneLayer.width = cv.width; stoneLayer.height = cv.height;
-  const k = dpr; sg.clearRect(0, 0, stoneLayer.width, stoneLayer.height);
-  const r = rng(99);
-  for (const s of stones) {
-    const pr = s.r * Math.max(sx, sy) * k;          // stone radius in device px
-    const cx = s.cx * sx * k, cy = s.cy * sy * k;
-    // long soft shadow away from the low sun (upper left)
-    sg.save(); sg.shadowColor = "rgba(3,5,12,.75)"; sg.shadowBlur = pr * 0.35; sg.shadowOffsetX = pr * 0.22; sg.shadowOffsetY = pr * 0.26;
-    stonePath(sg, s, k); sg.fillStyle = "#1a1c26"; sg.fill(); sg.restore();
-    // body: cool slate, lit from upper-left
-    stonePath(sg, s, k);
-    const body = sg.createRadialGradient(cx - pr * 0.45, cy - pr * 0.5, pr * 0.05, cx, cy, pr * 1.45);
-    body.addColorStop(0, "#7d7a80"); body.addColorStop(0.35, "#4a4b57"); body.addColorStop(0.75, "#272a37"); body.addColorStop(1, "#151722");
-    sg.fillStyle = body; sg.fill();
-    // speckle texture, clipped
-    sg.save(); stonePath(sg, s, k); sg.clip();
-    for (let i = 0; i < pr * 3; i++) {
-      const a = r() * TAU, d = Math.sqrt(r()) * pr * 1.4, x = cx + Math.cos(a) * d, y = cy + Math.sin(a) * d;
-      sg.fillStyle = r() < 0.5 ? "rgba(255,240,220,.07)" : "rgba(0,0,10,.18)";
-      sg.fillRect(x, y, k * (0.6 + r()), k * (0.6 + r()));
-    }
-    // warm sunrise rim on the lit side
-    const rim = sg.createLinearGradient(cx - pr, cy - pr, cx + pr * 0.4, cy + pr * 0.4);
-    rim.addColorStop(0, "rgba(255,190,110,.85)"); rim.addColorStop(0.45, "rgba(232,162,58,.18)"); rim.addColorStop(1, "rgba(232,162,58,0)");
-    sg.strokeStyle = rim; sg.lineWidth = Math.max(1.2 * k, pr * 0.06); stonePath(sg, s, k); sg.stroke();
-    sg.restore();
-  }
-}
+function nearestStone(x, y) { let best = null, bd = 1e9; for (const s of stones) { const d = stoneDist(s, x, y); if (d < bd) { bd = d; best = s; } } return best; }
 
 // ================= pattern =================
 function smin(a, b, k) { const hh = clamp(0.5 + 0.5 * (b - a) / k, 0, 1); return b + (a - b) * hh - k * hh * (1 - hh); }
@@ -231,7 +258,7 @@ function onOrient(e) {
   rawPitch = Math.atan2(uz, ssy) * R2D;           // top edge away = +
   if (!zero) zero = { r: rawRoll, p: rawPitch };
 }
-function onMotion(e) { const a = e.acceleration; if (!a || a.x == null) return; const m = Math.hypot(a.x, a.y, a.z); if (m > 7) shake = Math.min(1, Math.max(shake, (m - 7) / 9)); }
+function onMotion(e) { const a = e.acceleration; if (!a || a.x == null) return; const m = Math.hypot(a.x, a.y, a.z); if (m > 7) { const s = Math.min(1, (m - 7) / 9); if (s > shake + 0.25) hopPetals(s); shake = Math.min(1, Math.max(shake, s)); } }
 function recenter() { zero = haveSensor ? { r: rawRoll, p: rawPitch } : null; deskX = deskY = 0; }
 document.getElementById("recenter").addEventListener("click", recenter);
 const dz = v => { const s = Math.sign(v), a = Math.abs(v); return a < DEAD ? 0 : s * Math.min(1, (a - DEAD) / (FULL - DEAD)); };
@@ -248,7 +275,13 @@ function updateTilt() {
   if (Math.abs(tiltX) < 1e-3) tiltX = 0; if (Math.abs(tiltY) < 1e-3) tiltY = 0;
 }
 // desktop fallback: hold Shift and move the mouse to tilt; arrow keys / WASD also tilt
-addEventListener("mousemove", e => { shiftTilt = e.shiftKey && !haveSensor; if (shiftTilt) { deskX = (e.clientX / innerWidth - 0.5) * 2.2; deskY = (e.clientY / innerHeight - 0.5) * 2.2; } });
+let hover = null; // fine-pointer hover position (css px) for the rake preview
+addEventListener("mousemove", e => {
+  shiftTilt = e.shiftKey && !haveSensor;
+  if (shiftTilt) { deskX = (e.clientX / innerWidth - 0.5) * 2.2; deskY = (e.clientY / innerHeight - 0.5) * 2.2; }
+});
+cv.addEventListener("pointermove", e => { if (e.pointerType === "mouse") hover = { x: e.clientX, y: e.clientY, t: performance.now() }; });
+cv.addEventListener("pointerleave", () => { hover = null; });
 const KT = { ArrowLeft: [-1, 0], KeyA: [-1, 0], ArrowRight: [1, 0], KeyD: [1, 0], ArrowUp: [0, -1], KeyW: [0, -1], ArrowDown: [0, 1], KeyS: [0, 1] };
 const kdown = new Set();
 function kbUpdate() { kb.x = 0; kb.y = 0; for (const c of kdown) { kb.x += KT[c][0] * 0.8; kb.y += KT[c][1] * 0.8; } }
@@ -265,6 +298,8 @@ addEventListener("blur", () => { kdown.clear(); kbUpdate(); shiftTilt = false; }
 // ================= rake + ripple =================
 const rakes = new Map(); // pointerId -> {x,y,dx,dy,moved,speed,t}
 let activity = 0;        // frames of forced simulation after edits
+let glowLife = 0;        // frames the light trail keeps fading
+const ripples = [];      // light rings: {x, y, t, amp} in grid cells
 cv.addEventListener("pointerdown", e => {
   if (e.shiftKey && !haveSensor) return; // shift-drag on desktop tilts instead
   cv.setPointerCapture(e.pointerId);
@@ -295,6 +330,7 @@ function rakeTo(R, x, y, t) {
     const f = s / steps, px = R.x + mx * f, py = R.y + my * f;
     stampRake(px, py, R.dx + (ndx - R.dx) * f, R.dy + (ndy - R.dy) * f, R);
   }
+  plowPetals(R, mx, my, dt);
   R.x = x; R.y = y; R.dx = ndx; R.dy = ndy; R.moved += d;
   activity = 40; dirty = true;
 }
@@ -309,7 +345,7 @@ function stampRake(cx, cy, dx, dy, R) {
     const u = (x + 0.5 - cx) * nx + (y + 0.5 - cy) * ny, v = (x + 0.5 - cx) * dx + (y + 0.5 - cy) * dy;
     if (Math.abs(v) < 1.2 && Math.abs(u) < half) { sum += h[i]; cnt++; }
   }
-  if (!cnt) { if (!R.lastStone) { R.lastStone = true; touchStone(); } return; }
+  if (!cnt) { if (!R.lastStone) { R.lastStone = true; touchStone(cx, cy); } return; }
   R.lastStone = false;
   const mean = sum / cnt;
   for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
@@ -317,9 +353,13 @@ function stampRake(cx, cy, dx, dy, R) {
     const u = (x + 0.5 - cx) * nx + (y + 0.5 - cy) * ny, v = (x + 0.5 - cx) * dx + (y + 0.5 - cy) * dy;
     const au = Math.abs(u); if (au > half || Math.abs(v) > 1.2) continue;
     const w = (1 - smoothstep(half - SPACING * 0.75, half, au)) * (1 - smoothstep(0.4, 1.2, Math.abs(v)));
-    const tgt = mean - AMP * Math.cos(TAU * u / SPACING);
+    const cu = Math.cos(TAU * u / SPACING), tgt = mean - AMP * cu;
     h[i] += (tgt - h[i]) * 0.55 * w;
+    // light trail: brightest along the tine lines, fades over about a second
+    const gw = w * (0.08 + 0.92 * Math.pow(0.5 + 0.5 * cu, 4));
+    if (gw > glow[i]) glow[i] = gw;
   }
+  glowLife = 150;
 }
 function ripple(cx, cy) {
   const rad = SPACING * 4;
@@ -327,19 +367,22 @@ function ripple(cx, cy) {
   const y0 = Math.max(1, Math.floor(cy - rad)), y1 = Math.min(GH - 2, Math.ceil(cy + rad));
   let sum = 0, cnt = 0;
   for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) { const i = y * GW + x; if (!solid[i]) { sum += h[i]; cnt++; } }
-  if (!cnt) return; const mean = sum / cnt;
+  if (!cnt) { touchStone(cx, cy); return; }
+  const mean = sum / cnt;
   for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
     const i = y * GW + x; if (solid[i]) continue;
     const r = Math.hypot(x + 0.5 - cx, y + 0.5 - cy); if (r > rad) continue;
     const w = 1 - smoothstep(rad - SPACING * 1.2, rad, r);
     h[i] += (mean - AMP * Math.cos(TAU * r / SPACING) - h[i]) * 0.8 * w;
   }
+  ripples.push({ x: cx, y: cy, t: simT, amp: 1 }); if (ripples.length > 6) ripples.shift();
+  scatterPetals(cx * sx, cy * sy, rad * sx * 1.6, 1);
   activity = 40; dirty = true; chime(0.9);
 }
 
 // ================= smooth / re-rake =================
-let smoothT = 0, wipe = null;
-function startSmooth() { smoothT = 75; activity = 80; wipe = null; swish(0.6); }
+let smoothT = 0, wipe = null, smoothGlow = 0;
+function startSmooth() { smoothT = 75; activity = 80; wipe = null; smoothGlow = 1; hopPetals(0.7); swish(0.6); }
 function rerake() {
   smoothT = 0; makePattern();
   wipe = { p: -SPACING * 3, len: portrait ? GH : GW, speed: (portrait ? GH : GW) / 95 };
@@ -356,6 +399,9 @@ function stepWipe() {
     if (portrait) { const r0 = q * GW; for (let x = 0; x < GW; x++) { const i = r0 + x; if (!solid[i]) h[i] += (target[i] - h[i]) * (wipe.p - q > band - 1 ? 1 : k * 0.5); } }
     else for (let y = 0; y < GH; y++) { const i = y * GW + q; if (!solid[i]) h[i] += (target[i] - h[i]) * (wipe.p - q > band - 1 ? 1 : k * 0.5); }
   }
+  // the sweep line pushes the petals along in front of it
+  const linePx = wipe.p * (portrait ? sy : sx);
+  for (const p of petals) if (p.z < 4) { const c = portrait ? p.y : p.x; if (c < linePx + 6 && c > linePx - band * sx) { if (portrait) p.y = linePx + 6 + Math.random() * 4; else p.x = linePx + 6 + Math.random() * 4; p.spin += (Math.random() - 0.5) * 2; } }
   activity = 30; dirty = true;
   if (wipe.p > wipe.len + band) { for (let i = 0; i < N; i++) if (!solid[i]) h[i] = target[i]; wipe = null; }
 }
@@ -368,7 +414,6 @@ function relax(gx, gy, diff) {
   const T = TALUS, kx = gx * TILT_K, ky = gy * TILT_K;
   let moved = 0;
   sweep ^= 1;
-  // horizontal edges
   for (let y = 0; y < GH; y++) {
     const r0 = y * GW;
     for (let xx = 0; xx < GW - 1; xx++) {
@@ -381,7 +426,6 @@ function relax(gx, gy, diff) {
       h[i] -= q; h[j] += q; moved += q < 0 ? -q : q;
     }
   }
-  // vertical edges
   for (let yy = 0; yy < GH - 1; yy++) {
     const y = sweep ? yy : GH - 2 - yy, r0 = y * GW;
     for (let x = 0; x < GW; x++) {
@@ -396,13 +440,14 @@ function relax(gx, gy, diff) {
   }
   return moved;
 }
+let simT = 0;
 function simulate() {
   updateTilt();
   shake *= 0.94;
   const tilting = tiltX !== 0 || tiltY !== 0;
   let diff = 0;
   if (smoothT > 0) { diff = 0.18 * Math.min(1, smoothT / 20); smoothT--; }
-  if (shake > 0.02) diff = Math.max(diff, shake * 0.2);
+  if (shake > 0.02) { diff = Math.max(diff, shake * 0.2); smoothGlow = Math.max(smoothGlow, shake); }
   stepWipe();
   let moved = 0;
   if (tilting || activity > 0 || diff > 0) {
@@ -411,97 +456,646 @@ function simulate() {
     if (activity > 0) activity--;
   }
   flowLevel += 0.15 * (moved / N - flowLevel);
+  if (glowLife > 0) {
+    glowLife--; glowDirty = true;
+    if (glowLife === 0) glow.fill(0); else for (let i = 0; i < N; i++) glow[i] *= 0.955;
+  }
+  smoothGlow *= 0.96;
+  for (const s of stones) s.glow *= 0.95;
+  for (let i = ripples.length - 1; i >= 0; i--) if (simT - ripples[i].t > 2.4) ripples.splice(i, 1);
 }
 
-// ================= rendering =================
-// shading LUT: deep navy shadows -> dusky violet -> warm sand -> sunrise highlight
+// ================= light: low warm sun, slow golden-hour drift, tilt rakes it across the lines =================
+const SUN_BASE = Math.atan2(-0.62, -0.74); // toward the upper left
+const light = { ax: -0.77, ay: -0.64, el: 15 * D2R, sun: [1, 0.6, 0.3], sky: [0.2, 0.2, 0.4] };
+function updateLight() {
+  const drift = reduced ? 0 : 1;
+  let az = SUN_BASE + 0.22 * Math.sin(simT * TAU / 420) * drift;
+  let ax = Math.cos(az) + tiltX * 0.65, ay = Math.sin(az) + tiltY * 0.65; const l = Math.hypot(ax, ay) || 1; ax /= l; ay /= l;
+  // tilting the garden toward the sun lifts it a little, away from the sun sinks it toward the horizon
+  const toward = -(tiltX * Math.cos(az) + tiltY * Math.sin(az));
+  const elDeg = clamp(18 + 6 * Math.sin(simT * TAU / 300 - 1.2) * drift - toward * 7, 8, 34);
+  light.ax = ax; light.ay = ay; light.el = elDeg * D2R;
+  const k = smoothstep(6, 28, elDeg);   // lower sun = redder, warmer
+  const I = 3.5;
+  light.sun = [1.0 * I, (0.58 + 0.18 * k) * I, (0.27 + 0.17 * k) * I];
+  light.sky = [0.15 - 0.02 * k, 0.16, 0.34 + 0.03 * k];
+}
+
+// ================= petals: blossom falls from an unseen tree on the sunny side =================
+const petals = [];
+const PET_COLS = [[1.0, 0.80, 0.86], [1.0, 0.86, 0.90], [0.98, 0.70, 0.79], [1.0, 0.90, 0.92], [1.0, 0.72, 0.38], [1.0, 0.62, 0.30]];
+let windX = 0, windY = 0;
+function respawnPetal(p, landed) {
+  const rr = Math.random;
+  // bias toward the sun side (where the tree is), then the breeze carries them across
+  const bx = Math.pow(rr(), light.ax < 0 ? 1.6 : 0.6), by = Math.pow(rr(), light.ay < 0 ? 1.6 : 0.6);
+  p.x = (bx * 1.15 - 0.1) * cssW; p.y = (by * 1.15 - 0.1) * cssH;
+  p.z = landed ? 0 : 50 + rr() * 90;
+  p.vx = p.vy = 0; p.vz = 0;
+  p.fall = 10 + rr() * 9;
+  p.rot = rr() * TAU; p.spin = (rr() - 0.5) * 3; p.ph = rr() * TAU;
+  p.size = (5 + rr() * 3.5) * clamp(Math.min(cssW, cssH) / 760, 0.75, 1.3);
+  p.col = PET_COLS[rr() < 0.16 ? 4 + (rr() * 2 | 0) : (rr() * 4 | 0)];
+  p.age = landed ? rr() * 40 : 0; p.life = 45 + rr() * 60; p.fade = landed ? 1 : 0;
+  return p;
+}
+function initPetals() { petals.length = 0; for (let i = 0; i < PETALS; i++) petals.push(respawnPetal({}, Math.random() < 0.6)); }
+function plowPetals(R, mx, my, dtMs) {
+  const cx = R.x * sx, cy = R.y * sy, reach = ((TINES - 1) / 2 * SPACING + SPACING) * sx;
+  const vx = mx * sx / Math.max(8, dtMs) * 1000, vy = my * sy / Math.max(8, dtMs) * 1000;
+  for (const p of petals) {
+    if (p.z > 8) continue;
+    const dx = p.x - cx, dy = p.y - cy, d = Math.hypot(dx, dy);
+    if (d < reach) {
+      p.x += mx * sx * 1.05 + (Math.random() - 0.5) * 2; p.y += my * sy * 1.05 + (Math.random() - 0.5) * 2;
+      p.vx = vx * 0.55 + dx * 2; p.vy = vy * 0.55 + dy * 2; p.z = Math.max(p.z, 2 + Math.random() * 6); p.fall = 14; p.spin += (Math.random() - 0.5) * 9;
+    }
+  }
+}
+function scatterPetals(x, y, rad, k) {
+  for (const p of petals) {
+    if (p.z > 10) continue;
+    const dx = p.x - x, dy = p.y - y, d = Math.hypot(dx, dy) || 1;
+    if (d < rad) { const f = (1 - d / rad) * 260 * k; p.vx += dx / d * f; p.vy += dy / d * f; p.z = Math.max(p.z, (1 - d / rad) * 10 * k); p.spin += (Math.random() - 0.5) * 8; }
+  }
+}
+function hopPetals(k) { for (const p of petals) if (p.z < 2) { p.z = Math.random() * 7 * k + 1; p.vx += (Math.random() - 0.5) * 60 * k; p.vy += (Math.random() - 0.5) * 60 * k; p.spin += (Math.random() - 0.5) * 6; } }
+function updatePetals(dt) {
+  // breeze blows away from the sun, swaying slowly
+  const ws = 16 + 8 * Math.sin(simT * 0.11);
+  windX = -light.ax * ws + -light.ay * 6 * Math.sin(simT * 0.07); windY = -light.ay * ws + light.ax * 6 * Math.sin(simT * 0.07);
+  const carry = clamp(Math.sqrt(Math.max(0, flowLevel)) * 1.1, 0, 1);
+  for (const p of petals) {
+    p.age += dt;
+    if (p.z > 0) {
+      // fluttering descent
+      p.z -= p.fall * dt * (0.7 + 0.3 * Math.sin(simT * 2.1 + p.ph));
+      p.x += (windX + Math.sin(simT * 1.3 + p.ph) * 14 + p.vx) * dt;
+      p.y += (windY + Math.cos(simT * 1.1 + p.ph * 1.7) * 7 + p.vy) * dt;
+      const k = Math.exp(-dt * 2.2); p.vx *= k; p.vy *= k;
+      p.rot += (p.spin + Math.sin(simT * 1.7 + p.ph) * 1.4) * dt;
+      p.fade = Math.min(1, p.fade + dt * 0.8);
+      if (p.z <= 0) { p.z = 0; p.vx *= 0.25; p.vy *= 0.25; p.spin *= 0.2; }
+    } else {
+      const gx = clamp(p.x / sx | 0, 0, GW - 1), gy = clamp(p.y / sy | 0, 0, GH - 1), i = gy * GW + gx;
+      const onStone = solid[i] === 1, onFloor = !onStone && h[i] < 1.4;
+      // pouring sand carries the petals; on the bare lacquer floor they skate freely
+      const push = onStone ? 0 : onFloor ? 1 : carry;
+      p.vx += tiltX * 260 * push * dt; p.vy += tiltY * 260 * push * dt;
+      const fr = Math.exp(-dt * (onFloor ? 1.6 : onStone ? 6 : 4.5)); p.vx *= fr; p.vy *= fr;
+      p.x += p.vx * dt; p.y += p.vy * dt; p.rot += (p.vx * 0.004 + p.spin) * dt; p.spin *= Math.exp(-dt * 3);
+      if (p.age > p.life) p.fade -= dt * 0.25;
+      if (p.fade <= 0) respawnPetal(p, false);
+    }
+    if (p.x < -60 || p.y < -60 || p.x > cssW + 60 || p.y > cssH + 60) respawnPetal(p, false);
+  }
+}
+
+// ================= attract mode: a ghost rake loops through the garden behind the start card =================
+let started = false, ghostT = 0, ghost = null, ghostRaked = false;
+function ghostTick(dt) {
+  if (started) { if (ghost) { rakes.delete("ghost"); ghost = null; } return; }
+  ghostT += dt;
+  const T = 11, cyc = ghostT % (T + 5), th = cyc / T;
+  if (cyc < T) {
+    // a slow figure-eight that weaves between the stones
+    const a = th * TAU, px = cssW * (0.5 + 0.34 * Math.sin(a)), py = cssH * (0.52 + 0.2 * Math.sin(2 * a + 0.0));
+    if (!ghost) { ghost = { x: px / sx, y: py / sy, dx: 1, dy: 0, moved: 0, speed: 0, t: performance.now(), lastStone: false }; rakes.set("ghost", ghost); ghostRaked = true; }
+    else rakeTo(ghost, px / sx, py / sy, performance.now());
+    if (Math.random() < dt * 0.3) { const x = Math.random() * GW, y = Math.random() * GH; if (!solid[(y | 0) * GW + (x | 0)]) ripple(x, y); }
+  } else {
+    if (ghost) { rakes.delete("ghost"); ghost = null; }
+    if (ghostRaked && cyc > T + 1.2) { ghostRaked = false; rerake(); }
+  }
+}
+
+// ================= WebGL renderer =================
+let hp = "mediump", progMB, progP1, progP2, progScene, progBlur, progSpr, quadBuf, sprBuf;
+let texH = null, texGlow = null, fbM1 = null, fbM2 = null, fbP1 = null, fbP2 = null, fbB1 = null, fbB2 = null;
+let hBytes = null, gBytes = null, dirty = true, glowDirty = true, p1Dirty = true, glLost = false;
+const GLSL_NOISE = `
+float hash12(vec2 p){ vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
+vec2 hash22(vec2 p){ vec3 p3 = fract(vec3(p.xyx) * vec3(0.1031, 0.1030, 0.0973)); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.xx + p3.yz) * p3.zy); }
+vec3 hash32(vec2 p){ vec3 p3 = fract(vec3(p.xyx) * vec3(0.1031, 0.1030, 0.0973)); p3 += dot(p3, p3.yxz + 33.33); return fract((p3.xxy + p3.yzz) * p3.zyx); }
+float vnoise(vec2 p){ vec2 i = floor(p), f = p - i; vec2 u = f * f * (3.0 - 2.0 * f);
+  return mix(mix(hash12(i), hash12(i + vec2(1.0, 0.0)), u.x), mix(hash12(i + vec2(0.0, 1.0)), hash12(i + vec2(1.0, 1.0)), u.x), u.y); }`;
+const VS_Q = `attribute vec2 aP; void main(){ gl_Position = vec4(aP, 0.0, 1.0); }`;
+// heights are packed 16-bit into R/G (linear filtering stays exact because the decode is linear)
+const GLSL_H = `uniform sampler2D uH; uniform vec2 uGrid;
+float Hs(vec2 c){ vec4 t = texture2D(uH, (c + 0.5) / uGrid); return (t.r * 65280.0 + t.g * 255.0) * ${(HMAX / 65535).toFixed(9)}; }
+vec2 Hm(vec2 c){ vec4 t = texture2D(uH, (c + 0.5) / uGrid); return vec2((t.r * 65280.0 + t.g * 255.0) * ${(HMAX / 65535).toFixed(9)}, t.b); }`;
+// broad shape of the sand (piles, slumps): Gaussian blur of the heights, sigma 3 cells, which removes the grooves.
+// stones read as BASE so they don't bend the sand around them; output is packed 16-bit like the input.
+const FS_MBLUR = () => `precision ${hp} float;
+${GLSL_H}
+uniform vec2 uDir;
+void main(){
+  vec2 c = floor(gl_FragCoord.xy);
+  float acc = 0.0, ws = 0.0;
+  for (int i = -6; i <= 6; i++) {
+    float fi = float(i); vec2 m = Hm(clamp(c + uDir * fi, vec2(0.0), uGrid - 1.0));
+    float w = exp(-fi * fi / 18.0); acc += (m.y > 0.5 ? ${BASE.toFixed(1)} : m.x) * w; ws += w;
+  }
+  float q = clamp(acc / ws / ${HMAX.toFixed(1)}, 0.0, 1.0) * 65535.0, hi = floor(q / 256.0);
+  gl_FragColor = vec4(hi / 255.0, (q - hi * 256.0) / 255.0, 0.0, 1.0);
+}`;
+const GLSL_M = `uniform sampler2D uM;
+float Ms(vec2 c){ vec4 t = texture2D(uM, (c + 0.5) / uGrid); return (t.r * 65280.0 + t.g * 255.0) * ${(HMAX / 65535).toFixed(9)}; }
+// slope of the broad shape, in height units per cell; one-sided at the garden's edges
+vec2 macroG(vec2 c){ vec2 a = max(c - 3.0, vec2(0.0)), b = min(c + 3.0, uGrid - 1.0);
+  return vec2((Ms(vec2(b.x, c.y)) - Ms(vec2(a.x, c.y))) / max(b.x - a.x, 1.0), (Ms(vec2(c.x, b.y)) - Ms(vec2(c.x, a.y))) / max(b.y - a.y, 1.0)); }
+bool outside(vec2 p){ return p.x < 0.0 || p.y < 0.0 || p.x > uGrid.x - 1.0 || p.y > uGrid.y - 1.0; }`;
+const FS_P1 = () => `precision ${hp} float;
+${GLSL_H}
+${GLSL_M}
+// per cell: DETAIL normal (grooves, ripples; the broad slope is lit separately), sand height, stone mask.
+// Stone neighbours read as level so the sand meets the stone cleanly.
+void main(){
+  vec2 c = floor(gl_FragCoord.xy);
+  vec2 m = Hm(c);
+  if (m.y > 0.5) { gl_FragColor = vec4(0.5, 0.5, ${(BASE / 16).toFixed(4)}, 1.0); return; }
+  vec2 l = Hm(c - vec2(1.0, 0.0)), r = Hm(c + vec2(1.0, 0.0)), u = Hm(c - vec2(0.0, 1.0)), d = Hm(c + vec2(0.0, 1.0));
+  float hl = l.y > 0.5 ? m.x : l.x, hr = r.y > 0.5 ? m.x : r.x, hu = u.y > 0.5 ? m.x : u.x, hd = d.y > 0.5 ? m.x : d.x;
+  vec2 g = (vec2(hr - hl, hd - hu) * 0.5 - macroG(c)) * ${HS.toFixed(3)};
+  float gl0 = length(g); if (gl0 > 1.0) g /= gl0;               // clamp: no detail slope steeper than 45 degrees
+  vec3 n = normalize(vec3(-g, 1.0));
+  gl_FragColor = vec4(n.xy * 0.5 + 0.5, clamp(m.x / 16.0, 0.0, 1.0), 0.0);
+}`;
+const FS_P2 = () => `precision ${hp} float;
+${GLSL_H}
+${GLSL_M}
+uniform vec3 uL; // xy: toward the sun in grid space (y down), z: tan(elevation)
+// per cell: soft shadow from a short march toward the sun, a cavity term for the ambient light, and the broad slope.
+// Climbing rays measure occluders against the local broad slope, so a big pile's lee side doesn't shadow itself
+// into mud (only climbing: extending the slope downhill would invent occluders where the ground levels off).
+// Stones, ridges and grooves still cast shadows. Samples past the garden's edge never occlude.
+void main(){
+  vec2 c = floor(gl_FragCoord.xy);
+  float h0 = Hs(c);
+  vec2 G = macroG(c);
+  float res = 1.0, t = 0.8;
+  for (int i = 0; i < 14; i++) {
+    vec2 p = c + uL.xy * t;
+    if (outside(p)) break;
+    float d = (h0 - Hs(p) + max(dot(G, p - c), 0.0)) * ${HS.toFixed(3)} + t * uL.z + 0.04;
+    res = min(res, 2.6 * d / t);
+    t *= 1.38;
+  }
+  float sh = smoothstep(0.0, 1.0, clamp(res + 0.15, 0.0, 1.0));
+  float avg = 0.0;
+  for (int k = 0; k < 8; k++) { float a = float(k) * 0.7854;
+    vec2 p = c + vec2(cos(a), sin(a)) * 3.0, q = c + vec2(cos(a + 0.39), sin(a + 0.39)) * 7.0;
+    avg += (outside(p) ? h0 : Hs(p)) + (outside(q) ? h0 : Hs(q)); }
+  avg /= 16.0;
+  float ao = 1.0 - clamp((avg - h0) * ${(HS * 0.32).toFixed(3)}, 0.0, 0.75);
+  vec2 Gw = clamp(G * ${HS.toFixed(3)}, -1.0, 1.0);                  // broad world slope, clamped to 45 degrees
+  gl_FragColor = vec4(sh, ao, Gw * 0.5 + 0.5);
+}`;
+const FS_SCENE = () => `precision ${hp} float;
+uniform sampler2D uP1, uP2, uGlowT, uBloom;
+uniform vec2 uGrid, uRes, uL2;
+uniform float uPPC, uTime, uMode, uGlint, uSmooth;
+uniform vec3 uL, uSunC, uSkyC;
+uniform vec4 uSA[5];
+uniform vec4 uSB[5];
+uniform vec4 uSC[5];
+uniform int uSN;
+uniform vec4 uRip[6];
+uniform vec4 uWipe;
+${GLSL_NOISE}
+vec4 cubicW(float v){ vec4 n = vec4(1.0, 2.0, 3.0, 4.0) - v; vec4 s = n * n * n; float x = s.x, y = s.y - 4.0 * s.x, z = s.z - 4.0 * s.y + 6.0 * s.x; return vec4(x, y, z, 6.0 - x - y - z) * (1.0 / 6.0); }
+// cubic B-spline from four bilinear taps: grooves read as sculpted curves, not cells
+vec4 bicubic(sampler2D tex, vec2 uv, vec2 size){
+  vec2 tc = uv * size - 0.5, f = fract(tc); tc -= f;
+  vec4 xc = cubicW(f.x), yc = cubicW(f.y);
+  vec4 c = tc.xxyy + vec2(-0.5, 1.5).xyxy;
+  vec4 s = vec4(xc.xz + xc.yw, yc.xz + yc.yw);
+  vec4 o = (c + vec4(xc.yw, yc.yw) / s) / size.xxyy;
+  vec4 s0 = texture2D(tex, o.xz), s1 = texture2D(tex, o.yz), s2 = texture2D(tex, o.xw), s3 = texture2D(tex, o.yw);
+  float ax = s.x / (s.x + s.y), ay = s.z / (s.z + s.w);
+  return mix(mix(s3, s2, ax), mix(s1, s0, ax), ay);
+}
+// the floor under the sand: black lacquer mended with veins of gold
+vec3 lacquer(vec2 gp, out float vein){
+  vec2 p = gp / 17.0 + vec2(vnoise(gp * 0.05), vnoise(gp * 0.05 + 7.0)) * 0.6;
+  vec2 ip = floor(p), fp = fract(p);
+  float f1 = 8.0, f2 = 8.0; vec2 id = ip;
+  for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++) {
+    vec2 o = vec2(float(i), float(j)); vec2 q = o + hash22(ip + o) * 0.85 + 0.075 - fp; float d = dot(q, q);
+    if (d < f1) { f2 = f1; f1 = d; id = ip + o; } else if (d < f2) f2 = d;
+  }
+  float e = sqrt(f2) - sqrt(f1);
+  float w = 0.03 + 0.045 * vnoise(gp * 0.09 + 3.0);
+  vein = 1.0 - smoothstep(w * 0.35, w, e);
+  float halo = exp(-e * 14.0);
+  float flow = 0.62 + 0.38 * sin(uTime * 1.2 - (gp.x * 0.7 + gp.y) * 0.06 + hash12(id) * 6.283);
+  vein *= flow;
+  vec3 base = vec3(0.022, 0.024, 0.045) + vec3(0.035, 0.03, 0.06) * vnoise(gp * 0.04) + vec3(0.05, 0.03, 0.02) * (1.0 - hash12(id)) * 0.4;
+  return base + vec3(1.0, 0.70, 0.30) * (vein * 1.7 + halo * 0.16);
+}
+// dappled shade from a blossom tree just off-screen toward the sun
+float canopy(vec2 gp, vec2 uvc){
+  vec2 ld = normalize(uL2);
+  float m = smoothstep(0.2, 0.85, dot(uvc, ld));
+  if (m <= 0.0) return 1.0;
+  vec2 q = vec2(dot(gp, ld), dot(gp, vec2(-ld.y, ld.x))) * vec2(0.020, 0.048);
+  q += vec2(sin(uTime * 0.31) * 0.22 + uTime * 0.008, cos(uTime * 0.23) * 0.16);
+  float f = vnoise(q) * 0.55 + vnoise(q * 2.3 + 4.0) * 0.3 + vnoise(q * 5.3 + 9.0) * 0.15;
+  return 1.0 - smoothstep(0.47, 0.54, f) * m * 0.72;
+}
+vec4 stones(vec2 gp, float shadow){
+  vec4 acc = vec4(0.0);
+  for (int k = 0; k < 5; k++) {
+    if (k >= uSN) break;
+    vec4 A = uSA[k], B = uSB[k], C = uSC[k];
+    vec2 d = gp - A.xy; float c = cos(A.w), s = sin(A.w);
+    vec2 l = vec2(d.x * c + d.y * s, -d.x * s + d.y * c) / B.xy;
+    float len = length(l);
+    if (len > A.z * 1.3) continue;
+    float a = atan(l.y, l.x + 1e-5);
+    float R = A.z * (1.0 + 0.10 * sin(3.0 * a + B.z) + 0.06 * sin(5.0 * a + B.w) + 0.03 * sin(7.0 * a + C.x));
+    float sd = (len - R) * (B.x + B.y) * 0.5;
+    float cov = clamp(0.5 - sd * uPPC, 0.0, 1.0);
+    if (cov <= 0.0) continue;
+    vec2 qv = l / R; float q = min(length(qv), 1.0);
+    float zc = sqrt(max(1.0 - q * q, 0.0));
+    vec2 bp = l * 0.85 + A.xy * 0.37;
+    float b1 = vnoise(bp * 0.55), b2 = vnoise(bp * 1.9 + 3.1);
+    vec3 nl = vec3(qv.x / B.x, qv.y / B.y, zc * 0.95 + 0.06);
+    nl.xy += (vec2(vnoise(bp * 1.2 + 7.0), vnoise(bp * 1.2 + 1.7)) - 0.5) * 0.55 + (vec2(b2, vnoise(bp * 1.9 + 8.3)) - 0.5) * 0.25;
+    nl = normalize(nl);
+    vec3 n = vec3(nl.x * c - nl.y * s, nl.x * s + nl.y * c, nl.z);
+    float dif = max(dot(n, uL), 0.0);
+    vec3 alb = mix(vec3(0.16, 0.16, 0.20), vec3(0.34, 0.32, 0.34), b1);
+    alb *= 0.82 + 0.36 * hash12(floor(bp * 5.0));
+    float moss = smoothstep(0.58, 0.8, vnoise(bp * 0.3 + 11.0 + A.xy) * 0.75 + zc * 0.42);
+    alb = mix(alb, vec3(0.15, 0.19, 0.08), moss * 0.75);
+    float lich = smoothstep(0.80, 0.86, vnoise(bp * 2.4 + 5.0 + A.yx)) * smoothstep(0.2, 0.7, zc);
+    alb = mix(alb, vec3(0.62, 0.60, 0.48), lich * 0.35);
+    vec3 col = alb * (uSkyC * (0.5 + 0.5 * n.z) * 0.9 + uSunC * dif * mix(1.0, shadow, 0.85));
+    float rim = pow(1.0 - zc, 2.2) * max(dot(normalize(n.xy + 1e-4), uL2), 0.0);
+    col += uSunC * rim * 0.32 * (1.0 - moss * 0.5);
+    col += uSunC * pow(max(dot(reflect(-uL, n), vec3(0.0, 0.0, 1.0)), 0.0), 16.0) * 0.10 * (1.0 - moss);
+    // touched by the rake: the rim catches a little gold
+    col += vec3(1.0, 0.66, 0.30) * C.y * (pow(1.0 - zc, 3.0) * 2.0 + 0.15);
+    acc.rgb = mix(acc.rgb, col, cov); acc.a = max(acc.a, cov);
+  }
+  return acc;
+}
+vec3 aces(vec3 x){ return clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14), 0.0, 1.0); }
+void main(){
+  vec2 fc = vec2(gl_FragCoord.x, uRes.y - gl_FragCoord.y);
+  vec2 uv = fc / uRes;
+  vec2 gp = uv * uGrid;
+  vec2 uvc = (uv - 0.5) * vec2(uRes.x / uRes.y, 1.0);
+  vec4 p1 = bicubic(uP1, uv, uGrid);
+  vec4 p2 = bicubic(uP2, uv, uGrid);
+  vec3 n = vec3(p1.xy * 2.0 - 1.0, 0.0); n.z = sqrt(max(1.0 - dot(n.xy, n.xy), 0.05)); n = normalize(n);
+  float hh = p1.z * 16.0, sh = p2.x, ao = p2.y;
+  float dap = canopy(gp, uvc) * (0.9 + 0.1 * vnoise(gp * 0.006 + vec2(uTime * 0.012, 0.0)));
+  // sand: warm grains, paler on the ridges
+  float gr = hash12(floor(gp * 3.0));
+  vec3 alb = vec3(0.86, 0.69, 0.47) * (0.9 + 0.2 * gr) * (0.93 + 0.14 * vnoise(gp * 0.07));
+  alb = mix(alb, vec3(0.90, 0.78, 0.62), clamp((hh - ${BASE.toFixed(1)}) * 0.35, 0.0, 1.0) * 0.6);
+  // piles and slumps: their broad slope gets soft form light (sun-facing side brighter, lee side gently dimmer)
+  vec3 nM = normalize(vec3(-(p2.zw * 2.0 - 1.0), 1.0));
+  vec3 Lm = normalize(vec3(uL.xy, uL.z + 0.9));
+  float form = mix(1.0, clamp(dot(nM, Lm) / Lm.z, 0.25, 1.7), 0.7);
+  float dif = max(dot(n, uL), 0.0);
+  float lit = sh * dap;
+  vec3 col = alb * (uSunC * dif * lit * form + uSkyC * ao * (0.6 + 0.4 * nM.z) * (0.8 + 0.2 * form)) + vec3(0.32, 0.16, 0.10) * 0.08 * ao;
+  col += uSunC * pow(max(dot(reflect(-uL, n), vec3(0.0, 0.0, 1.0)), 0.0), 7.0) * 0.06 * lit;
+  vec3 em = vec3(0.0);
+  // glinting quartz grains: they wink on and off as the light moves
+  if (uGlint > 0.0) {
+    vec2 gq = gp * 2.7; vec3 r3 = hash32(floor(gq));
+    vec3 fn = normalize(n + (r3 - 0.5) * vec3(1.7, 1.7, 0.4));
+    float gg = max(dot(reflect(-uL, fn), vec3(0.0, 0.0, 1.0)), 0.0);
+    float tw = 0.55 + 0.45 * sin(uTime * (1.5 + r3.x * 4.0) + r3.y * 40.0);
+    float spark = pow(gg, 55.0) * step(0.5, r3.z) * tw * smoothstep(0.5, 0.08, length(fract(gq) - 0.5));
+    col += vec3(1.0, 0.88, 0.70) * spark * lit * (2.2 + uSmooth * 4.0) * uGlint;
+  }
+  // where the sand pours away the gold-mended floor shows, glowing up through the thin sand first
+  if (hh < 2.8) {
+    float vein; vec3 fl = lacquer(gp, vein);
+    float t = 1.0 - clamp(hh / 1.4, 0.0, 1.0);
+    vec3 gold = vec3(1.0, 0.62, 0.24) * vein * exp(-hh * 1.6) * 1.1;
+    col += gold; em += gold * 0.8;
+    col = mix(col, fl, smoothstep(0.0, 1.0, t));
+    em += vec3(1.0, 0.70, 0.30) * vein * t * 1.1;
+  }
+  // light left behind by the rake
+  float tr = texture2D(uGlowT, uv).r;
+  vec3 trail = alb * vec3(1.0, 0.52, 0.20) * tr * 1.5 + vec3(1.0, 0.6, 0.25) * tr * tr * tr * 0.35;
+  col += trail; em += trail * 0.45;
+  // rings of light from taps
+  for (int k = 0; k < 6; k++) {
+    vec4 R = uRip[k]; if (R.w <= 0.0) continue;
+    float d = length(gp - R.xy), rad = 4.0 + R.z * 30.0;
+    float band = exp(-pow((d - rad) / (1.6 + R.z * 2.0), 2.0));
+    vec3 rc = vec3(1.0, 0.74, 0.44) * band * R.w * exp(-R.z * 1.5) * 1.4 + vec3(1.0, 0.82, 0.6) * exp(-d * 0.35) * exp(-R.z * 5.0) * R.w;
+    col += rc; em += rc;
+  }
+  // the re-rake sweep
+  if (uWipe.y > 0.5) {
+    float co = uWipe.z > 0.5 ? gp.y : gp.x, d = co - uWipe.x;
+    vec3 wc = vec3(1.0, 0.72, 0.36) * (exp(-d * d * 0.12) * 1.6 + (d < 0.0 ? exp(d * 0.08) * 0.12 : 0.0));
+    col += wc; em += wc;
+  }
+  vec4 st = stones(gp, sh);
+  col = mix(col, st.rgb, st.a); em *= 1.0 - st.a;
+  // sunrise wash from the sun side, cool navy falloff on the far side
+  float side = dot(uvc, normalize(uL2));
+  col *= mix(vec3(0.74, 0.82, 1.08), vec3(1.12, 1.0, 0.80), smoothstep(-0.7, 0.7, side));
+  if (uMode > 0.5) { gl_FragColor = vec4(em * 0.5 + max(col - 1.4, 0.0) * 0.12, 1.0); return; }
+  col += texture2D(uBloom, gl_FragCoord.xy / uRes).rgb * vec3(1.15, 0.86, 0.58);
+  col = aces(col * 1.05);
+  float v = smoothstep(1.2, 0.3, length(uvc * vec2(0.85, 1.05)));
+  col *= mix(0.42, 1.0, v);
+  col = pow(col, vec3(0.97, 1.0, 1.03));
+  col += (hash12(fc + fract(uTime * 7.31) * 311.0) - 0.5) * 0.035;
+  gl_FragColor = vec4(col, 1.0);
+}`;
+const FS_BLUR = () => `precision mediump float; uniform sampler2D uT; uniform vec2 uD, uRes;
+void main(){ vec2 uv = gl_FragCoord.xy / uRes; vec3 c = texture2D(uT, uv).rgb * 0.227027;
+  c += (texture2D(uT, uv + uD * 1.3846).rgb + texture2D(uT, uv - uD * 1.3846).rgb) * 0.316216;
+  c += (texture2D(uT, uv + uD * 3.2308).rgb + texture2D(uT, uv - uD * 3.2308).rgb) * 0.070270;
+  gl_FragColor = vec4(c, 1.0); }`;
+// sprites: petals (alpha), their soft shadows, and additive light (alpha 0 under premultiplied blending)
+const VS_SPR = `attribute vec2 aC; attribute vec4 aA; attribute vec4 aB; attribute float aAl; uniform vec2 uCss;
+varying vec2 vC; varying float vK; varying vec3 vCol; varying float vAl; varying float vSz;
+void main(){ float c = cos(aA.w), s = sin(aA.w); vec2 o = vec2(aC.x * c - aC.y * s, aC.x * s + aC.y * c) * aA.z; vec2 p = aA.xy + o;
+  gl_Position = vec4(p.x / uCss.x * 2.0 - 1.0, 1.0 - p.y / uCss.y * 2.0, 0.0, 1.0); vC = aC; vK = aB.x; vCol = aB.yzw; vAl = aAl; vSz = aA.z; }`;
+const FS_SPR = () => `precision mediump float; varying vec2 vC; varying float vK; varying vec3 vCol; varying float vAl; varying float vSz; uniform float uPx; uniform vec2 uRes;
+float petal(vec2 c){ vec2 q = c; q.x *= 1.5 + 0.7 * max(-q.y, 0.0); float d1 = length(q) - 0.84; float d2 = length(c - vec2(0.0, 0.95)) - 0.2; return max(d1, -d2); }
+void main(){
+  vec4 o;
+  if (vK < 0.5) {
+    float d = petal(vC), aa = 1.8 / max(vSz * uPx, 1.0), a = smoothstep(aa, -aa, d) * vAl;
+    vec3 col = mix(vCol * vec3(0.86, 0.66, 0.72), mix(vCol, vec3(1.0, 0.97, 0.95), 0.5), smoothstep(-0.95, 0.75, vC.y));
+    col *= 0.93 + 0.09 * cos(vC.x * 11.0) + 0.1 * (1.0 + d);
+    o = vec4(col * a, a);
+  } else if (vK < 1.5) {
+    float d = petal(vC * 0.9), a = smoothstep(0.45, -0.3, d) * 0.38 * vAl;
+    o = vec4(vec3(0.03, 0.0, 0.06) * a, a);
+  } else {
+    float r = dot(vC, vC), gw = exp(-r * 4.5) * (1.0 - smoothstep(0.6, 1.0, r));
+    o = vec4(vCol * gw * vAl, 0.0);
+  }
+  vec2 uvc = (gl_FragCoord.xy / uRes - 0.5) * vec2(uRes.x / uRes.y, 1.0);
+  o.rgb *= mix(0.5, 1.0, smoothstep(1.2, 0.3, length(uvc * vec2(0.85, 1.05))));
+  gl_FragColor = o;
+}`;
+function compile(type, src) { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s) + "\n" + src.split("\n").map((l, i) => (i + 1) + ": " + l).join("\n")); return s; }
+function program(vs, fs, attrs) {
+  const p = gl.createProgram(); gl.attachShader(p, compile(gl.VERTEX_SHADER, vs)); gl.attachShader(p, compile(gl.FRAGMENT_SHADER, fs));
+  attrs.forEach((a, i) => gl.bindAttribLocation(p, i, a)); gl.linkProgram(p);
+  if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
+  const cache = {}; p.u = n => (n in cache) ? cache[n] : (cache[n] = gl.getUniformLocation(p, n)); return p;
+}
+function texParams(filter) { for (const [k, v] of [[gl.TEXTURE_MIN_FILTER, filter], [gl.TEXTURE_MAG_FILTER, filter], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, v); }
+function mkTex(w, hh, fmt, data) { const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t); texParams(gl.LINEAR); gl.texImage2D(gl.TEXTURE_2D, 0, fmt, w, hh, 0, fmt, gl.UNSIGNED_BYTE, data || null); return t; }
+function mkFB(w, hh) { const tex = mkTex(w, hh, gl.RGBA, null), fb = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, fb); gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0); gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT); gl.bindFramebuffer(gl.FRAMEBUFFER, null); return { fb, tex, w, h: hh }; }
+function freeFB(f) { if (f) { gl.deleteTexture(f.tex); gl.deleteFramebuffer(f.fb); } }
+function initGL() {
+  const f = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.HIGH_FLOAT); hp = f && f.precision > 0 ? "highp" : "mediump";
+  progP1 = program(VS_Q, FS_P1(), ["aP"]); progMB = program(VS_Q, FS_MBLUR(), ["aP"]); progP2 = program(VS_Q, FS_P2(), ["aP"]); progScene = program(VS_Q, FS_SCENE(), ["aP"]); progBlur = program(VS_Q, FS_BLUR(), ["aP"]);
+  progSpr = program(VS_SPR, FS_SPR(), ["aC", "aA", "aB", "aAl"]);
+  quadBuf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, quadBuf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  sprBuf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, sprBuf); gl.bufferData(gl.ARRAY_BUFFER, sprData.byteLength, gl.DYNAMIC_DRAW);
+  gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+  texH = null; fbM1 = fbM2 = fbP1 = fbP2 = fbB1 = fbB2 = null;
+}
+function glGrid() {
+  if (texH) { gl.deleteTexture(texH); gl.deleteTexture(texGlow); freeFB(fbM1); freeFB(fbM2); freeFB(fbP1); freeFB(fbP2); }
+  hBytes = new Uint8Array(N * 4); gBytes = new Uint8Array(N);
+  texH = mkTex(GW, GH, gl.RGBA, null); texGlow = mkTex(GW, GH, gl.LUMINANCE, null);
+  fbM1 = mkFB(GW, GH); fbM2 = mkFB(GW, GH); fbP1 = mkFB(GW, GH); fbP2 = mkFB(GW, GH);
+  dirty = glowDirty = p1Dirty = true;
+}
+function glSize() {
+  freeFB(fbB1); freeFB(fbB2);
+  const bw = Math.max(8, Math.round(cv.width / 4)), bh = Math.max(8, Math.round(cv.height / 4));
+  fbB1 = mkFB(bw, bh); fbB2 = mkFB(bw, bh);
+}
+function uploadH() {
+  const B = hBytes, k = 65535 / HMAX;
+  for (let i = 0, o = 0; i < N; i++, o += 4) {
+    const s = solid[i], v = s ? stoneH[i] : h[i];
+    let q = (v * k) | 0; if (q < 0) q = 0; else if (q > 65535) q = 65535;
+    B[o] = q >> 8; B[o + 1] = q & 255; B[o + 2] = s ? 255 : 0; B[o + 3] = 255;
+  }
+  gl.bindTexture(gl.TEXTURE_2D, texH); gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, GW, GH, gl.RGBA, gl.UNSIGNED_BYTE, B);
+}
+function uploadGlow() {
+  const B = gBytes; for (let i = 0; i < N; i++) { const v = glow[i]; B[i] = v >= 1 ? 255 : (v * 255) | 0; }
+  gl.bindTexture(gl.TEXTURE_2D, texGlow); gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, GW, GH, gl.LUMINANCE, gl.UNSIGNED_BYTE, B);
+}
+function bindTarget(f, w, hh) { gl.bindFramebuffer(gl.FRAMEBUFFER, f ? f.fb : null); gl.viewport(0, 0, f ? f.w : w, f ? f.h : hh); }
+function quad() { gl.bindBuffer(gl.ARRAY_BUFFER, quadBuf); gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0); gl.drawArrays(gl.TRIANGLES, 0, 3); }
+function tex(unit, t) { gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, t); }
+const SA = new Float32Array(20), SB = new Float32Array(20), SC = new Float32Array(20), RIP = new Float32Array(24);
+function sceneUniforms(p, w, hh, mode) {
+  gl.uniform1i(p.u("uP1"), 0); gl.uniform1i(p.u("uP2"), 1); gl.uniform1i(p.u("uGlowT"), 2); gl.uniform1i(p.u("uBloom"), 3);
+  gl.uniform2f(p.u("uGrid"), GW, GH); gl.uniform2f(p.u("uRes"), w, hh);
+  gl.uniform1f(p.u("uPPC"), w / GW); gl.uniform1f(p.u("uTime"), simT); gl.uniform1f(p.u("uMode"), mode);
+  gl.uniform1f(p.u("uGlint"), mode ? 0 : 1); gl.uniform1f(p.u("uSmooth"), smoothGlow);
+  const ce = Math.cos(light.el);
+  gl.uniform3f(p.u("uL"), light.ax * ce, light.ay * ce, Math.sin(light.el)); gl.uniform2f(p.u("uL2"), light.ax, light.ay);
+  gl.uniform3fv(p.u("uSunC"), light.sun); gl.uniform3fv(p.u("uSkyC"), light.sky);
+  stones.forEach((s, k) => { SA.set([s.cx, s.cy, s.r, s.rot], k * 4); SB.set([s.ex, s.ey, s.p1, s.p2], k * 4); SC.set([s.p3, s.glow, 0, 0], k * 4); });
+  gl.uniform4fv(p.u("uSA[0]"), SA); gl.uniform4fv(p.u("uSB[0]"), SB); gl.uniform4fv(p.u("uSC[0]"), SC); gl.uniform1i(p.u("uSN"), stones.length);
+  RIP.fill(0); ripples.forEach((r, k) => RIP.set([r.x, r.y, simT - r.t, r.amp], k * 4)); gl.uniform4fv(p.u("uRip[0]"), RIP);
+  gl.uniform4f(p.u("uWipe"), wipe ? wipe.p : 0, wipe ? 1 : 0, portrait ? 1 : 0, 0);
+}
+function drawGL() {
+  gl.disable(gl.BLEND); gl.disable(gl.DEPTH_TEST);
+  for (let a = 1; a < 4; a++) gl.disableVertexAttribArray(a);
+  if (dirty) { uploadH(); p1Dirty = true; dirty = false; }
+  if (glowDirty) { uploadGlow(); glowDirty = false; }
+  if (p1Dirty) {
+    // broad shape (two blur passes), then detail normals
+    gl.useProgram(progMB); gl.uniform1i(progMB.u("uH"), 0); gl.uniform2f(progMB.u("uGrid"), GW, GH);
+    bindTarget(fbM1); tex(0, texH); gl.uniform2f(progMB.u("uDir"), 1, 0); quad();
+    bindTarget(fbM2); tex(0, fbM1.tex); gl.uniform2f(progMB.u("uDir"), 0, 1); quad();
+    bindTarget(fbP1); gl.useProgram(progP1); tex(0, texH); tex(1, fbM2.tex); gl.uniform1i(progP1.u("uH"), 0); gl.uniform1i(progP1.u("uM"), 1); gl.uniform2f(progP1.u("uGrid"), GW, GH); quad(); p1Dirty = false;
+  }
+  // shadows every frame: the sun is always drifting a little
+  bindTarget(fbP2); gl.useProgram(progP2); tex(0, texH); tex(1, fbM2.tex); gl.uniform1i(progP2.u("uH"), 0); gl.uniform1i(progP2.u("uM"), 1); gl.uniform2f(progP2.u("uGrid"), GW, GH);
+  gl.uniform3f(progP2.u("uL"), light.ax, light.ay, Math.tan(light.el)); quad();
+  // bloom: render the glowing parts at quarter resolution, blur twice
+  tex(0, fbP1.tex); tex(1, fbP2.tex); tex(2, texGlow); tex(3, fbB2.tex);
+  bindTarget(fbB1); gl.useProgram(progScene); sceneUniforms(progScene, fbB1.w, fbB1.h, 1); quad();
+  gl.useProgram(progBlur); gl.uniform1i(progBlur.u("uT"), 0); gl.uniform2f(progBlur.u("uRes"), fbB1.w, fbB1.h);
+  for (const r of [1, 2.2]) {
+    bindTarget(fbB2); tex(0, fbB1.tex); gl.uniform2f(progBlur.u("uD"), r / fbB1.w, 0); quad();
+    bindTarget(fbB1); tex(0, fbB2.tex); gl.uniform2f(progBlur.u("uD"), 0, r / fbB1.h); quad();
+  }
+  // full-resolution scene
+  bindTarget(null, cv.width, cv.height); gl.useProgram(progScene);
+  tex(0, fbP1.tex); tex(1, fbP2.tex); tex(2, texGlow); tex(3, fbB1.tex);
+  sceneUniforms(progScene, cv.width, cv.height, 0); quad();
+  // petals, shadows, rake light
+  buildSprites();
+  if (sprN) {
+    gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    gl.useProgram(progSpr); gl.uniform2f(progSpr.u("uCss"), cssW, cssH); gl.uniform1f(progSpr.u("uPx"), cv.width / cssW); gl.uniform2f(progSpr.u("uRes"), cv.width, cv.height);
+    gl.bindBuffer(gl.ARRAY_BUFFER, sprBuf); gl.bufferSubData(gl.ARRAY_BUFFER, 0, sprData.subarray(0, sprN * 6 * SPR_F));
+    const st = SPR_F * 4;
+    for (let a = 0; a < 4; a++) gl.enableVertexAttribArray(a);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, st, 0); gl.vertexAttribPointer(1, 4, gl.FLOAT, false, st, 8); gl.vertexAttribPointer(2, 4, gl.FLOAT, false, st, 24); gl.vertexAttribPointer(3, 1, gl.FLOAT, false, st, 40);
+    gl.drawArrays(gl.TRIANGLES, 0, sprN * 6);
+    for (let a = 1; a < 4; a++) gl.disableVertexAttribArray(a);
+    gl.disable(gl.BLEND);
+  }
+}
+// ---- sprite list ----
+const SPR_F = 11, SPR_MAX = 900, sprData = new Float32Array(SPR_MAX * 6 * SPR_F), CORN = [-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1];
+let sprN = 0;
+function spr(x, y, size, rot, kind, r, g2c, b, a) {
+  if (sprN >= SPR_MAX) return; let o = sprN * 6 * SPR_F;
+  for (let k = 0; k < 6; k++) { sprData[o++] = CORN[k * 2]; sprData[o++] = CORN[k * 2 + 1]; sprData[o++] = x; sprData[o++] = y; sprData[o++] = size; sprData[o++] = rot; sprData[o++] = kind; sprData[o++] = r; sprData[o++] = g2c; sprData[o++] = b; sprData[o++] = a; }
+  sprN++;
+}
+function shadowOff(z) { const k = 0.32 / Math.max(0.12, Math.tan(light.el)); return [-light.ax * (z * k + 1.2), -light.ay * (z * k + 1.2)]; }
+function buildSprites() {
+  sprN = 0;
+  const warm = light.sun[1] / light.sun[0];
+  for (const p of petals) { if (p.fade <= 0) continue; const [ox, oy] = shadowOff(p.z), s = p.size * (1 + p.z * 0.004) * (1 + p.z * 0.01);
+    const fz = clamp(1 - p.z / 120, 0, 1); spr(p.x + ox, p.y + oy, s * (1 + p.z * 0.004), p.rot, 1, 0, 0, 0, p.fade * fz * fz); }
+  for (const p of petals) { if (p.fade <= 0) continue; const s = p.size * (1 + p.z * 0.004);
+    const fl = p.z > 0 ? 0.78 + 0.32 * Math.abs(Math.sin(p.rot * 1.7 + p.ph)) : 0.98, w = 0.9 + 0.1 * warm;
+    spr(p.x, p.y, s, p.rot, 0, p.col[0] * fl, p.col[1] * fl * w, p.col[2] * fl * (0.85 + 0.15 * warm), p.fade); }
+  for (const R of rakes.values()) rakeSprites(R.x * sx, R.y * sy, R.dx, R.dy, 1);
+  if (hover && !rakes.size && performance.now() - hover.t < 2500 && started) rakeSprites(hover.x, hover.y, portrait ? 0 : 1, portrait ? 1 : 0, 0.35);
+  // stray sparks thrown up while raking fast
+  for (const s of sparks) spr(s.x, s.y, s.size, 0, 2, 1.0, 0.72, 0.38, s.a);
+}
+function rakeSprites(cx, cy, dx, dy, a) {
+  const nx = -dy, ny = dx, k = Math.min(sx, sy);
+  for (let t = -1; t < TINES; t++) {
+    const u = (t + 0.5 - (TINES - 1) / 2) * SPACING;   // between tines: the bar
+    if (t >= 0 && t < TINES - 1) spr(cx + nx * u * sx, cy + ny * u * sy, 9 * k * 0.5 + 4, 0, 2, 1.0, 0.62, 0.30, 0.35 * a);
+  }
+  for (let t = 0; t < TINES; t++) {
+    const u = (t - (TINES - 1) / 2) * SPACING, x = cx + nx * u * sx, y = cy + ny * u * sy;
+    spr(x, y, 16 + 4 * k, 0, 2, 1.0, 0.66, 0.32, 0.75 * a);
+    spr(x, y, 4.5, 0, 2, 1.0, 0.95, 0.85, 1.6 * a);
+  }
+}
+const sparks = [];
+function updateSparks(dt) {
+  for (const R of rakes.values()) {
+    if (R.speed > 250 && Math.random() < 0.6) {
+      const nx = -R.dy, ny = R.dx, u = ((Math.random() * TINES | 0) - (TINES - 1) / 2) * SPACING;
+      sparks.push({ x: (R.x + nx * u) * sx, y: (R.y + ny * u) * sy, vx: (Math.random() - 0.5) * 60 - R.dx * 30, vy: (Math.random() - 0.5) * 60 - R.dy * 30, size: 3 + Math.random() * 5, a: 0.9, life: 0.5 + Math.random() * 0.5 });
+    }
+  }
+  for (let i = sparks.length - 1; i >= 0; i--) { const s = sparks[i]; s.x += s.vx * dt; s.y += s.vy * dt; s.life -= dt; s.a = Math.max(0, s.life) * 1.4; if (s.life <= 0) sparks.splice(i, 1); }
+  if (sparks.length > 120) sparks.splice(0, sparks.length - 120);
+}
+
+// ================= Canvas2D fallback (the original look, plus petals) =================
+const off = document.createElement("canvas"), og = off.getContext("2d");
+const stoneLayer = document.createElement("canvas"), sg = stoneLayer.getContext("2d");
+let floorCol, grain, img, px32, noisePat = null;
+function grid2D() {
+  floorCol = new Uint32Array(N); grain = new Int8Array(N);
+  off.width = GW; off.height = GH; img = og.createImageData(GW, GH); px32 = new Uint32Array(img.data.buffer);
+  const r = rng(7); for (let i = 0; i < N; i++) grain[i] = (r() * 9 - 4.5) | 0;
+  for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) {
+    const gl2 = (x % 12 === 0 || y % 12 === 0) ? 1 : 0, R = gl2 ? 120 : 10, G = gl2 ? 84 : 11, B = gl2 ? 30 : 22;
+    floorCol[y * GW + x] = 0xff000000 | (B << 16) | (G << 8) | R;
+  }
+}
+function stonePath(ctx, s, k) {
+  const c = Math.cos(s.rot), sn = Math.sin(s.rot); ctx.beginPath();
+  for (let i = 0; i <= 72; i++) { const a = i / 72 * TAU, R = stoneRad(s, a) + 0.35, lx = Math.cos(a) * R * s.ex, ly = Math.sin(a) * R * s.ey; const X = (s.cx + lx * c - ly * sn) * sx * k, Y = (s.cy + lx * sn + ly * c) * sy * k; i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); }
+  ctx.closePath();
+}
+function drawStoneLayer() {
+  stoneLayer.width = cv.width; stoneLayer.height = cv.height;
+  const k = dpr; sg.clearRect(0, 0, stoneLayer.width, stoneLayer.height); const r = rng(99);
+  for (const s of stones) {
+    const pr = s.r * Math.max(sx, sy) * k, cx = s.cx * sx * k, cy = s.cy * sy * k;
+    sg.save(); sg.shadowColor = "rgba(3,5,12,.75)"; sg.shadowBlur = pr * 0.35; sg.shadowOffsetX = pr * 0.5; sg.shadowOffsetY = pr * 0.45; stonePath(sg, s, k); sg.fillStyle = "#1a1c26"; sg.fill(); sg.restore();
+    stonePath(sg, s, k);
+    const body = sg.createRadialGradient(cx - pr * 0.45, cy - pr * 0.5, pr * 0.05, cx, cy, pr * 1.45);
+    body.addColorStop(0, "#7d7a80"); body.addColorStop(0.35, "#4a4b57"); body.addColorStop(0.75, "#272a37"); body.addColorStop(1, "#151722");
+    sg.fillStyle = body; sg.fill();
+    sg.save(); stonePath(sg, s, k); sg.clip();
+    for (let i = 0; i < pr * 3; i++) { const a = r() * TAU, d = Math.sqrt(r()) * pr * 1.4; sg.fillStyle = r() < 0.5 ? "rgba(255,240,220,.07)" : "rgba(0,0,10,.18)"; sg.fillRect(cx + Math.cos(a) * d, cy + Math.sin(a) * d, k * (0.6 + r()), k * (0.6 + r())); }
+    const rim = sg.createLinearGradient(cx - pr, cy - pr, cx + pr * 0.4, cy + pr * 0.4);
+    rim.addColorStop(0, "rgba(255,190,110,.85)"); rim.addColorStop(0.45, "rgba(232,162,58,.18)"); rim.addColorStop(1, "rgba(232,162,58,0)");
+    sg.strokeStyle = rim; sg.lineWidth = Math.max(1.2 * k, pr * 0.06); stonePath(sg, s, k); sg.stroke(); sg.restore();
+  }
+}
 const LUT = new Uint32Array(256);
 (function () {
   const stops = [[0, [14, 18, 34]], [0.22, [46, 42, 66]], [0.45, [121, 92, 76]], [0.62, [178, 132, 88]], [0.8, [226, 172, 108]], [1, [255, 226, 178]]];
-  for (let i = 0; i < 256; i++) {
-    const t = i / 255; let k = 0; while (k < stops.length - 2 && t > stops[k + 1][0]) k++;
-    const [ta, a] = stops[k], [tb, b] = stops[k + 1], f = (t - ta) / (tb - ta);
-    const c = a.map((v, j) => Math.round(v + (b[j] - v) * f));
-    LUT[i] = 0xff000000 | (c[2] << 16) | (c[1] << 8) | c[0];
-  }
+  for (let i = 0; i < 256; i++) { const t = i / 255; let k = 0; while (k < stops.length - 2 && t > stops[k + 1][0]) k++;
+    const [ta, a] = stops[k], [tb, b] = stops[k + 1], f = (t - ta) / (tb - ta), c = a.map((v, j) => Math.round(v + (b[j] - v) * f)); LUT[i] = 0xff000000 | (c[2] << 16) | (c[1] << 8) | c[0]; }
 })();
-let dirty = true, lightX = -0.74, lightY = -0.62, noisePat = null;
-function makeNoise() {
-  const c = document.createElement("canvas"); c.width = c.height = 128; const x = c.getContext("2d"), d = x.createImageData(128, 128), r = rng(11);
-  for (let i = 0; i < d.data.length; i += 4) { const v = (r() * 255) | 0; d.data[i] = d.data[i + 1] = d.data[i + 2] = v; d.data[i + 3] = 255; }
-  x.putImageData(d, 0, 0); noisePat = g.createPattern(c, "repeat");
-}
-function shadeSand() {
-  // the low sun drifts slightly with tilt so the grooves catch the light as you move
-  const lx = lightX + tiltX * 0.25, ly = lightY + tiltY * 0.25, ll = Math.hypot(lx, ly), Lx = lx / ll, Ly = ly / ll;
-  const gain = 66, W = GW;
+function shade2D() {
+  const Lx = light.ax, Ly = light.ay, gain = 66, W = GW;
   for (let y = 0; y < GH; y++) {
     const ym = y > 0 ? -W : 0, yp = y < GH - 1 ? W : 0, r0 = y * W;
     for (let x = 0; x < W; x++) {
-      const i = r0 + x;
-      if (solid[i]) { px32[i] = LUT[120]; continue; } // hidden under the stone layer; sand-coloured so edges blend
+      const i = r0 + x; if (solid[i]) { px32[i] = LUT[120]; continue; }
       const hi = h[i], il = x > 0 ? i - 1 : i, ir = x < W - 1 ? i + 1 : i, iu = i + ym, id = i + yp;
-      // stone neighbours read as the same height so the sand meets the stone cleanly
       const hl = solid[il] ? hi : h[il], hr = solid[ir] ? hi : h[ir], hu = solid[iu] ? hi : h[iu], hd = solid[id] ? hi : h[id];
-      const dx = hr - hl, dy = hd - hu;
-      let s = 132 + (dx * Lx + dy * Ly) * gain + (hi - BASE) * 9 + grain[i];
-      s = s < 0 ? 0 : s > 255 ? 255 : s | 0;
+      let s = 132 + ((hr - hl) * Lx + (hd - hu) * Ly) * gain + (hi - BASE) * 9 + grain[i] + glow[i] * 90; s = s < 0 ? 0 : s > 255 ? 255 : s | 0;
       let c = LUT[s];
-      if (hi < 1.4) { // sand poured away: reveal the glowing floor
-        const t = 1 - hi / 1.4, fc = floorCol[i];
+      if (hi < 1.4) { const t = 1 - hi / 1.4, fc = floorCol[i];
         const r = (c & 255) + (((fc & 255) - (c & 255)) * t), gg = ((c >> 8) & 255) + ((((fc >> 8) & 255) - ((c >> 8) & 255)) * t), b = ((c >> 16) & 255) + ((((fc >> 16) & 255) - ((c >> 16) & 255)) * t);
-        c = 0xff000000 | ((b | 0) << 16) | ((gg | 0) << 8) | (r | 0);
-      }
+        c = 0xff000000 | ((b | 0) << 16) | ((gg | 0) << 8) | (r | 0); }
       px32[i] = c;
     }
   }
   og.putImageData(img, 0, 0);
 }
-let t0 = performance.now();
-function draw(now) {
-  const Wd = cv.width, Hd = cv.height;
-  shadeSand();
-  g.imageSmoothingEnabled = true; g.imageSmoothingQuality = "high";
-  g.drawImage(off, 0, 0, Wd, Hd);
-  // sunrise wash from the upper right, navy falloff toward the lower left
+function draw2D() {
+  const Wd = cv.width, Hd = cv.height, k = cv.width / cssW;
+  shade2D(); g.imageSmoothingEnabled = true; g.imageSmoothingQuality = "high"; g.drawImage(off, 0, 0, Wd, Hd);
   g.globalCompositeOperation = "soft-light";
-  const sun = g.createRadialGradient(Wd * 0.85, -Hd * 0.1, 0, Wd * 0.85, -Hd * 0.1, Math.max(Wd, Hd) * 1.1);
+  const sun = g.createRadialGradient(Wd * 0.1, -Hd * 0.1, 0, Wd * 0.1, -Hd * 0.1, Math.max(Wd, Hd) * 1.1);
   sun.addColorStop(0, "rgba(255,170,90,.55)"); sun.addColorStop(0.5, "rgba(232,120,70,.18)"); sun.addColorStop(1, "rgba(20,30,70,.5)");
-  g.fillStyle = sun; g.fillRect(0, 0, Wd, Hd);
-  g.globalCompositeOperation = "overlay"; g.globalAlpha = 0.07; g.fillStyle = noisePat; g.fillRect(0, 0, Wd, Hd);
-  g.globalAlpha = 1; g.globalCompositeOperation = "source-over";
+  g.fillStyle = sun; g.fillRect(0, 0, Wd, Hd); g.globalCompositeOperation = "source-over";
   g.drawImage(stoneLayer, 0, 0);
-  // vignette
+  for (const p of petals) { if (p.fade <= 0) continue; const [ox, oy] = shadowOff(p.z);
+    g.save(); g.globalAlpha = p.fade * 0.3; g.fillStyle = "#0a0412"; g.translate((p.x + ox) * k, (p.y + oy) * k); g.rotate(p.rot); g.beginPath(); g.ellipse(0, 0, p.size * 0.6 * k, p.size * k, 0, 0, TAU); g.fill(); g.restore();
+    g.save(); g.globalAlpha = p.fade; g.fillStyle = `rgb(${p.col[0] * 255 | 0},${p.col[1] * 255 | 0},${p.col[2] * 255 | 0})`; g.translate(p.x * k, p.y * k); g.rotate(p.rot); g.beginPath(); g.ellipse(0, 0, p.size * 0.6 * k, p.size * k, 0, 0, TAU); g.fill(); g.restore(); }
   const vg = g.createRadialGradient(Wd / 2, Hd / 2, Math.min(Wd, Hd) * 0.35, Wd / 2, Hd / 2, Math.hypot(Wd, Hd) * 0.6);
-  vg.addColorStop(0, "rgba(11,13,18,0)"); vg.addColorStop(1, "rgba(11,13,18,.55)");
-  g.fillStyle = vg; g.fillRect(0, 0, Wd, Hd);
-  // rake heads
-  for (const R of rakes.values()) drawRake(R);
-  if (wipe) drawWipe();
+  vg.addColorStop(0, "rgba(11,13,18,0)"); vg.addColorStop(1, "rgba(11,13,18,.55)"); g.fillStyle = vg; g.fillRect(0, 0, Wd, Hd);
+  for (const R of rakes.values()) { const nx = -R.dy, ny = R.dx; g.save(); g.shadowColor = "#e8a23a"; g.shadowBlur = 14 * k; g.fillStyle = "rgba(255,214,150,.95)";
+    for (let t = 0; t < TINES; t++) { const u = (t - (TINES - 1) / 2) * SPACING; g.beginPath(); g.arc((R.x + nx * u) * sx * k, (R.y + ny * u) * sy * k, 2.2 * k, 0, TAU); g.fill(); } g.restore(); }
+  if (wipe) { g.save(); g.shadowColor = "#e8a23a"; g.shadowBlur = 18 * k; g.strokeStyle = "rgba(240,184,90,.6)"; g.lineWidth = 1.5 * k; g.beginPath();
+    if (portrait) { const y = wipe.p * sy * k; g.moveTo(0, y); g.lineTo(cv.width, y); } else { const x = wipe.p * sx * k; g.moveTo(x, 0); g.lineTo(x, cv.height); } g.stroke(); g.restore(); }
+  dirty = false;
 }
-function drawRake(R) {
-  const k = dpr, nx = -R.dy, ny = R.dx, cx = R.x * sx * k, cy = R.y * sy * k, half = (TINES - 1) / 2 * SPACING;
-  g.save(); g.shadowColor = "#e8a23a"; g.shadowBlur = 14 * k; g.strokeStyle = "rgba(240,184,90,.55)"; g.lineWidth = 1.5 * k;
-  g.beginPath(); g.moveTo(cx - nx * (half + 1.5) * sx * k, cy - ny * (half + 1.5) * sy * k); g.lineTo(cx + nx * (half + 1.5) * sx * k, cy + ny * (half + 1.5) * sy * k); g.stroke();
-  g.fillStyle = "rgba(255,214,150,.95)";
-  for (let t = 0; t < TINES; t++) { const u = (t - (TINES - 1) / 2) * SPACING; g.beginPath(); g.arc(cx + nx * u * sx * k, cy + ny * u * sy * k, 2.2 * k, 0, TAU); g.fill(); }
-  g.restore();
-}
-function drawWipe() {
-  const k = dpr; g.save(); g.shadowColor = "#e8a23a"; g.shadowBlur = 18 * k; g.strokeStyle = "rgba(240,184,90,.6)"; g.lineWidth = 1.5 * k; g.beginPath();
-  if (portrait) { const y = wipe.p * sy * k; g.moveTo(0, y); g.lineTo(cv.width, y); } else { const x = wipe.p * sx * k; g.moveTo(x, 0); g.lineTo(x, cv.height); }
-  g.stroke(); g.restore(); dirty = true;
-}
+
+// ================= frame loop + adaptive resolution =================
 const readout = document.getElementById("readout");
-let lastRead = "";
+let lastRead = "", lastT = 0, slow = 0, fast = 0, frames = 0;
 function frame(now) {
   requestAnimationFrame(frame);
-  simulate();
-  if (rakes.size) dirty = true;
-  if (dirty) { dirty = false; draw(now); }
-  const ang = Math.round(Math.hypot(tiltX, tiltY) * FULL);
-  const txt = ang ? `TILT ${ang}°` : "LEVEL";
-  if (txt !== lastRead) { readout.textContent = txt; lastRead = txt; }
+  if (glLost) return;
+  const dt = Math.min(1 / 20, Math.max(0.001, (now - lastT) / 1000)); lastT = now; simT += dt;
+  ghostTick(dt);
+  simulate(); updateLight(); updatePetals(dt); updateSparks(dt);
+  if (gl) drawGL(); else draw2D();
+  frames++;
+  if (gl && !lockScale && document.visibilityState === "visible" && frames > 30) {
+    if (dt > 0.024) { slow++; fast = 0; } else if (dt < 0.0175) { fast++; slow = Math.max(0, slow - 1); }
+    if (slow > 45 && scale > 0.5) { scale = Math.max(0.5, scale - 0.1); sizeCanvas(); slow = 0; }
+    if (fast > 240 && scale < 1) { scale = Math.min(1, scale + 0.05); sizeCanvas(); fast = 0; }
+  }
+  if (frames % 6 === 0) {
+    const ang = Math.round(Math.hypot(tiltX, tiltY) * FULL);
+    const txt = (ang ? `TILT ${ang}°` : "LEVEL") + ` · SUN ${Math.round(light.el * R2D)}°`;
+    if (txt !== lastRead) { readout.textContent = txt; lastRead = txt; }
+  }
   audioTick();
 }
 
@@ -509,7 +1103,7 @@ function frame(now) {
 let ac = null, au = null, soundOn = localStorage.getItem("garden-sound") !== "off";
 function noiseBuffer(sec) { const b = ac.createBuffer(1, ac.sampleRate * sec, ac.sampleRate), d = b.getChannelData(0); let p = 0; for (let i = 0; i < d.length; i++) { const w = Math.random() * 2 - 1; p = 0.97 * p + 0.03 * w; d[i] = w * 0.6 + p * 3; } return b; }
 function buildAudio() {
-  const AC = window.AudioContext || window.webkitAudioContext; ac = new AC();
+  const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return; ac = new AC();
   const t = ac.currentTime;
   const master = ac.createGain(); master.gain.value = 0;
   const comp = ac.createDynamicsCompressor(); comp.threshold.value = -18; comp.ratio.value = 4;
@@ -529,10 +1123,10 @@ function buildAudio() {
   // sand hiss: follows how much sand is flowing
   const nb = noiseBuffer(3);
   const hissSrc = ac.createBufferSource(); hissSrc.buffer = nb; hissSrc.loop = true;
-  const hp = ac.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 1800;
+  const hp2 = ac.createBiquadFilter(); hp2.type = "highpass"; hp2.frequency.value = 1800;
   const bp = ac.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 4200; bp.Q.value = 0.6;
   const hiss = ac.createGain(); hiss.gain.value = 0;
-  hissSrc.connect(hp); hp.connect(bp); bp.connect(hiss); hiss.connect(master); hiss.connect(verb); hissSrc.start(t);
+  hissSrc.connect(hp2); hp2.connect(bp); bp.connect(hiss); hiss.connect(master); hiss.connect(verb); hissSrc.start(t);
   // rake scrape: follows drag speed
   const rakeSrc = ac.createBufferSource(); rakeSrc.buffer = nb; rakeSrc.loop = true; rakeSrc.playbackRate.value = 0.7;
   const rbp = ac.createBiquadFilter(); rbp.type = "bandpass"; rbp.frequency.value = 900; rbp.Q.value = 1.1;
@@ -559,7 +1153,7 @@ function chime(vel) {
     o.connect(e); e.connect(out); o.start(t); o.stop(t + dec + 0.05);
   });
 }
-function touchStone() { chime(0.6); }
+function touchStone(x, y) { const s = nearestStone(x, y); if (s) s.glow = 1; chime(0.6); }
 function swish(vel) {
   if (!ac || !soundOn) return; const t = ac.currentTime;
   au.rake.gain.cancelScheduledValues(t); au.rake.gain.setTargetAtTime(0.07 * vel, t, 0.08); au.rake.gain.setTargetAtTime(0, t + 0.9, 0.4);
@@ -568,7 +1162,7 @@ function scheduleAmbientChime() { setTimeout(() => { if (!document.hidden) chime
 let rakeLvl = 0;
 function audioTick() {
   if (!au) return; const t = ac.currentTime;
-  const hiss = Math.min(0.14, Math.sqrt(flowLevel) * 0.12); // flowLevel ~0.01 gentle tilt, ~2.6 hard pour
+  const hiss = Math.min(0.14, Math.sqrt(Math.max(0, flowLevel)) * 0.12);
   au.hiss.gain.setTargetAtTime(hiss, t, 0.08); au.bp.frequency.setTargetAtTime(3200 + hiss * 9000, t, 0.1);
   let sp = 0; for (const R of rakes.values()) sp = Math.max(sp, R.speed);
   rakeLvl += 0.2 * (Math.min(1, sp / 900) - rakeLvl);
@@ -580,12 +1174,13 @@ document.addEventListener("visibilitychange", () => { if (!ac) return; if (docum
 // ================= start: one tap unlocks audio + asks for motion =================
 document.getElementById("go").addEventListener("click", () => {
   try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch (_) {}
-  if (!ac) buildAudio(); ac.resume();
+  if (!ac) buildAudio(); if (ac) ac.resume();
   const msg = document.getElementById("msg");
   const listen = () => { addEventListener("deviceorientation", onOrient); addEventListener("devicemotion", onMotion); };
   const DOE = window.DeviceOrientationEvent, DME = window.DeviceMotionEvent;
   const done = () => {
-    document.getElementById("start").remove(); chime(0.8);
+    started = true; leaveStart(); chime(0.8);
+    ripple(GW * 0.5, GH * 0.55);
     setTimeout(() => { if (!haveSensor) document.getElementById("note").textContent = "DRAG = RAKE · TAP = RIPPLE · SHIFT+MOUSE OR ARROWS = TILT · SPACE = SMOOTH"; }, 800);
   };
   if (DOE && typeof DOE.requestPermission === "function") {
@@ -596,9 +1191,20 @@ document.getElementById("go").addEventListener("click", () => {
 });
 
 // ================= boot =================
-makeNoise(); buildGrid(); requestAnimationFrame(frame);
+cv.addEventListener("webglcontextlost", e => { e.preventDefault(); glLost = true; });
+cv.addEventListener("webglcontextrestored", () => { initGL(); glGrid(); glSize(); glLost = false; });
+if (gl) { try { initGL(); } catch (e) {
+  // a canvas that already holds a WebGL context can't switch to 2D: reload in fallback mode
+  console.warn("[garden] WebGL setup failed, using 2D", e); const u = new URL(location.href); u.searchParams.set("nogl", "1"); location.replace(u); throw e; } }
+buildGrid(); initPetals(); updateLight();
+requestAnimationFrame(t => { lastT = t; requestAnimationFrame(frame); });
 // tiny hook for automated tests and tinkering in the console
-window.garden = { bench: n => { const t = performance.now(); for (let k = 0; k < n; k++) { simulate(); draw(); } return (performance.now() - t) / n; }, stats: () => ({ GW, GH, N, flowLevel, tiltX, tiltY, mass: h.reduce((a, b) => a + b, 0) }), rerake, smooth: startSmooth, ripple: (x, y) => ripple(x / sx, y / sy) };
+window.garden = {
+  bench: n => { const t = performance.now(); for (let k = 0; k < n; k++) { simulate(); updateLight(); dirty = true; gl ? drawGL() : draw2D(); } if (gl) gl.finish(); return (performance.now() - t) / n; },
+  stats: () => ({ GW, GH, N, gl: !!gl, hp, w: cv.width, h: cv.height, scale, flowLevel, tiltX, tiltY, sun: Math.round(light.el * R2D), petals: petals.length, airborne: petals.filter(p => p.z > 0).length, mass: h.reduce((a, b) => a + b, 0) }),
+  row: (fy, x0, x1) => { const y = Math.round(fy * (GH - 1)); return Array.from(h.subarray(y * GW + x0, y * GW + x1)).map(v => +v.toFixed(1)); },
+  rerake, smooth: startSmooth, ripple: (x, y) => ripple(x / sx, y / sy), tilt: (x, y) => { deskX = x; deskY = y; shiftTilt = true; }, untilt: () => { shiftTilt = false; }
+};
 </script>
 </body>
 </html>

@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Russell Merrick">
-  <rect width="32" height="32" rx="8" fill="#0b0d12"/>
-  <rect x="0.6" y="0.6" width="30.8" height="30.8" rx="7.4" fill="none" stroke="#2a2f3a" stroke-width="1.2"/>
-  <!-- Geometric RM monogram -->
-  <path fill="#e8a23a" d="M7.2 8.2h6.15c2.55 0 4.15 1.45 4.15 3.7 0 1.7-.9 2.95-2.35 3.45L17.9 23.8h-2.7l-2.55-8.15H9.55V23.8H7.2V8.2zm2.35 2.05v4.35h3.7c1.4 0 2.2-.7 2.2-1.85 0-1.15-.8-1.85-2.2-1.85h-3.7zM19.15 8.2h2.5l3.05 8.55 3.05-8.55h2.5V23.8h-2.3V13.15L24.85 23.6h-2.15l-3.1-10.45V23.8h-2.3V8.2z"/>
-</svg>
