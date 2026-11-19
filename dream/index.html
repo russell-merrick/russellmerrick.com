@@ -55,37 +55,17 @@ canvas.stage{position:fixed;inset:0;width:100%;height:100%;display:block;touch-a
 #note{font:400 10.5px/1.6 var(--mono);letter-spacing:.14em;color:var(--faint);text-transform:uppercase;max-width:62ch;text-shadow:0 1px 8px rgba(0,0,0,.6)}
 #bar .tools{display:flex;gap:8px;pointer-events:auto;flex-shrink:0}
 
-/* ---------- start card: glass over the live scene ---------- */
-#start{position:fixed;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(ellipse 80% 70% at 50% 50%,rgba(7,8,13,0) 0%,rgba(7,8,13,.35) 55%,rgba(7,8,13,.82) 100%);transition:opacity .8s ease,filter .8s ease,transform .8s cubic-bezier(.2,.7,.2,1)}
-#start.leaving{opacity:0;filter:blur(10px);transform:scale(1.06);pointer-events:none}
-#start .card{position:relative;max-width:520px;width:100%;text-align:center;padding:34px 30px 26px;border-radius:28px;background:linear-gradient(180deg,rgba(18,20,30,.42),rgba(10,11,18,.58));-webkit-backdrop-filter:blur(18px) saturate(150%);backdrop-filter:blur(18px) saturate(150%);border:1px solid var(--border);box-shadow:0 30px 80px -30px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.06);animation:rise .9s cubic-bezier(.2,.7,.2,1) both}
-#start .card::before{content:"";position:absolute;inset:-1px;border-radius:inherit;padding:1px;background:linear-gradient(140deg,rgba(255,210,150,.45),rgba(255,255,255,.04) 35%,rgba(255,255,255,0) 60%,rgba(176,124,255,.35));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
-#start .kicker{font:400 10.5px var(--mono);letter-spacing:.28em;text-transform:uppercase;color:var(--faint);margin:0 0 14px}
-#start .kicker span{color:var(--gold)}
-#start h1{margin:0 0 10px;font-weight:500;font-size:clamp(44px,10vw,84px);line-height:.95;letter-spacing:-.035em;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 28px rgba(255,140,70,.28))}
-#start .tag{margin:0 auto 14px;max-width:30ch;font:500 17px/1.45 var(--sans);color:rgba(243,238,230,.86)}
-#start .howto{margin:0 auto 22px;max-width:40ch;font:400 11px/1.75 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
-#go{position:relative;overflow:hidden;appearance:none;border:0;border-radius:999px;background:var(--grad);color:#1a1006;font:500 17px var(--sans);letter-spacing:.01em;padding:16px 38px;cursor:pointer;box-shadow:0 10px 40px -10px rgba(255,120,60,.7),0 0 0 1px rgba(255,255,255,.15) inset;transition:transform .2s cubic-bezier(.2,.7,.2,1),box-shadow .2s}
-#go:hover,#go:focus-visible{transform:translateY(-1px) scale(1.03);box-shadow:0 14px 50px -10px rgba(255,120,60,.9),0 0 0 1px rgba(255,255,255,.25) inset;outline:none}
-#go::after{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.55),transparent);transform:skewX(-20deg);animation:shine 3.6s ease-in-out infinite}
-#msg{min-height:1em;margin:12px 0 0;font:400 12px var(--mono);letter-spacing:.04em;color:var(--dim)}
-#start .links{margin-top:14px;display:flex;flex-direction:column;gap:10px;align-items:center;font:400 10.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
-#start .links a{color:var(--dim);text-decoration:none;border-bottom:1px solid rgba(255,255,255,.14);padding-bottom:1px;transition:color .2s,border-color .2s}
-#start .links a:hover{color:var(--gold);border-color:var(--accent)}
 #nogl{position:fixed;inset:0;z-index:6;display:flex;align-items:center;justify-content:center;padding:30px;text-align:center;font:400 13px/1.7 var(--mono);color:var(--dim)}
 #nogl a{color:var(--gold)}
 [hidden]{display:none!important}
-@keyframes rise{from{opacity:0;transform:translateY(18px) scale(.98)}to{opacity:1;transform:none}}
-@keyframes shine{0%,55%{left:-60%}85%,100%{left:130%}}
 @keyframes breathe{0%,100%{opacity:.55;transform:scale(.85)}50%{opacity:1;transform:scale(1.1)}}
-@media (prefers-reduced-motion:reduce){#go::after,#hud .dot{animation:none}#start .card{animation:none}}
+@media (prefers-reduced-motion:reduce){#hud .dot{animation:none}}
 
 /* ---------- small screens (mirrors the live site's breakpoints) ---------- */
 @media (min-width:521px){#hud .short{display:none}}
 @media (max-width:520px){#readout,#hud .long{display:none}#note{font-size:9px}}
 @media (max-width:560px){#hud .right{flex-wrap:wrap;justify-content:flex-end;row-gap:8px;width:100%}.exps{width:100%}.exps a{flex:1;text-align:center;padding:4px 0;letter-spacing:.03em}#bar{flex-direction:column;align-items:stretch}#bar .tools{justify-content:flex-end}}
 @media (min-width:561px) and (max-width:1000px){#hud .brand{display:none}.exps a{padding:3px 7px;letter-spacing:.08em}}
-@media (max-height:460px){#start{padding:12px;overflow-y:auto}#start .card{max-width:660px;padding:16px 26px 14px;margin:auto}#start .kicker{margin-bottom:6px}#start h1{font-size:40px;margin-bottom:6px}#start .tag{max-width:46ch;font-size:14px;margin-bottom:6px}#start .howto{max-width:72ch;font-size:10px;line-height:1.6;margin-bottom:10px}#go{padding:11px 30px;font-size:15px}#msg{margin-top:6px}#start .links{margin-top:6px;flex-direction:row;flex-wrap:wrap;justify-content:center;gap:4px 14px}}
 </style>
 </head>
 <body>
@@ -103,30 +83,9 @@ canvas.stage{position:fixed;inset:0;width:100%;height:100%;display:block;touch-a
   <span id="note">TILT = STEER &amp; CLIMB · DRAG = LOOK · TAP = LANTERN · HOLD = DRIFT FASTER</span>
   <span class="tools"><button id="sound" class="chip" aria-pressed="true" title="Ambient sound on/off">SOUND</button></span>
 </div>
-<div id="start">
-  <div class="card">
-    <p class="kicker">Russell Merrick · <span>03 / 05</span></p>
-    <h1>Dream</h1>
-    <p class="tag">A slow flight through a lucid dusk that never ends.</p>
-    <p class="howto">Tilt to steer and climb · drag to look · tap a floating form to make it bloom · tap the sky to send up a lantern · hold to drift faster · sound is soft</p>
-    <button id="go">Tap to begin</button>
-    <p id="msg"></p>
-    <div class="links">
-      <a href="https://russellmerrick.com/about/">Skip to site →</a>
-      <span>or wander to <a href="../">tilt bass</a> · <a href="../garden/">sand garden</a> · <a href="../nebula/">nebula</a></span>
-    </div>
-  </div>
-</div>
 <div id="nogl" hidden>This one needs WebGL, which this browser has turned off. Try the <a href="../garden/">sand garden</a> or <a href="https://russellmerrick.com/about/">enter the site</a>.</div>
 <script>
 "use strict";
-// fade the start card away (instead of removing it instantly)
-function leaveStart() {
-  const s = document.getElementById("start"); if (!s) return;
-  s.classList.add("leaving");
-  setTimeout(() => s.remove(), 850);
-}
-
 // ================= config =================
 const FOV = 62, SPEED = 5.5, BOOST = 3.2, TURN = 34, CLIMB = 9;   // deg, units/s, x, deg/s at full tilt, units/s
 const DEAD = 3, FULL = 30;                                          // tilt deadzone / full scale (deg)
@@ -670,7 +629,7 @@ function updateTilt(dt) {
   if (haveSensor && zero) {
     let dr = rawRoll - zero.r, dp = rawPitch - zero.p; if (dp > 180) dp -= 360; if (dp < -180) dp += 360;
     tx = dz(dr); ty = dz(dp);                       // ty > 0: top edge away = nose down
-  } else if (started) { tx = clamp(mouseTX + kb.x, -1, 1); ty = clamp(mouseTY + kb.y, -1, 1); }
+  } else { tx = clamp(mouseTX + kb.x, -1, 1); ty = clamp(mouseTY + kb.y, -1, 1); }
   const k = 1 - Math.exp(-dt * 6); tiltX += (tx - tiltX) * k; tiltY += (ty - tiltY) * k;
 }
 // desktop: mouse position steers (centre 12% is neutral); arrows / WASD too
@@ -682,7 +641,7 @@ const kdown = new Set();
 function kbUpdate() { kb.x = 0; kb.y = 0; for (const c of kdown) { kb.x += KT[c][0]; kb.y += KT[c][1]; } }
 addEventListener("keydown", e => {
   if (e.code in KT) { kdown.add(e.code); kbUpdate(); e.preventDefault(); }
-  else if (e.code === "Space") { if (!boostHeld && started) whoosh(); boostHeld = true; e.preventDefault(); }
+  else if (e.code === "Space") { if (!boostHeld) whoosh(); boostHeld = true; e.preventDefault(); }
   else if (e.code === "KeyM" && !e.repeat) toggleSound();
 });
 addEventListener("keyup", e => { if (e.code in KT) { kdown.delete(e.code); kbUpdate(); } if (e.code === "Space") boostHeld = false; });
@@ -691,7 +650,6 @@ addEventListener("blur", () => { kdown.clear(); kbUpdate(); boostHeld = false; }
 // ================= touch: drag = look, tap = lantern / bloom, hold = drift faster =================
 const ptrs = new Map(); let dragging = false;
 cv.addEventListener("pointerdown", e => {
-  if (!started) return;
   cv.setPointerCapture(e.pointerId);
   const p = { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, t0: performance.now(), moved: 0, hold: false };
   p.timer = setTimeout(() => { if (p.moved < 10) { p.hold = true; boostHeld = true; whoosh(); } }, 330);
@@ -801,7 +759,7 @@ function step(dt) {
   simT += dt; updateTilt(dt);
   // steering: roll turns + banks; pitch climbs / dives and nudges the view
   cam.yaw += tiltX * TURN * D2R * dt;
-  if (!started) cam.yaw += Math.sin(simT * 0.045) * 0.06 * dt;      // attract mode: lazy turns
+  if (!started && !mouseTX && !mouseTY && !kb.x && !kb.y) cam.yaw += Math.sin(simT * 0.045) * 0.06 * dt;      // idle: lazy turns until the first gesture
   cam.bank += (tiltX * 14 * D2R - cam.bank) * (1 - Math.exp(-dt * 4));
   cam.altOff = clamp(cam.altOff - tiltY * CLIMB * dt, 2.5, 34);
   const boostT = boostHeld ? 1 : 0; boost += (boostT - boost) * (1 - Math.exp(-dt * 2.5));
@@ -1069,21 +1027,31 @@ function audioTick() {
 }
 document.addEventListener("visibilitychange", () => { if (!ac) return; if (document.hidden) ac.suspend(); else ac.resume(); });
 
-// ================= start: one tap unlocks audio + asks for motion =================
-document.getElementById("go").addEventListener("click", () => {
+// ================= first gesture unlocks audio + asks for motion (iOS) =================
+let unlocked = false, motionListening = false;
+function listenMotion() {
+  if (motionListening) return; motionListening = true;
+  addEventListener("deviceorientation", onOrient);
+}
+function unlock() {
+  if (unlocked) return; unlocked = true;
   try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch (_) {}
-  if (!ac) buildAudio(); ac.resume();
-  const msg = document.getElementById("msg");
+  if (!ac) buildAudio(); if (ac) ac.resume();
   const DOE = window.DeviceOrientationEvent;
   const done = () => {
-    leaveStart(); started = true; pulse = Math.min(1, pulse + 0.5); flash = 0.1; setTimeout(() => chime(0.8), 400);
+    started = true;
     setTimeout(() => { if (!haveSensor) document.getElementById("note").textContent = "MOUSE / ARROWS = STEER & CLIMB · DRAG = LOOK · CLICK = LANTERN · HOLD OR SPACE = FASTER"; }, 800);
   };
   if (DOE && typeof DOE.requestPermission === "function") {
-    DOE.requestPermission().then(r => { if (r === "granted") addEventListener("deviceorientation", onOrient); else msg.textContent = "Motion off. Drag and tap still work."; done(); })
-      .catch(() => { msg.textContent = "Motion unavailable. Drag and tap still work."; done(); });
-  } else { addEventListener("deviceorientation", onOrient); done(); }
-});
+    DOE.requestPermission().then(r => { if (r === "granted") listenMotion(); done(); })
+      .catch(() => { done(); });
+  } else { listenMotion(); done(); }
+}
+addEventListener("pointerdown", unlock, true);
+addEventListener("touchstart", unlock, true);
+addEventListener("keydown", e => { if (!e.repeat) unlock(); }, true);
+// non-iOS: tilt works as soon as the sensor reports, no tap needed
+if (!(window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === "function")) listenMotion();
 
 // ================= boot =================
 let glLost = false;
@@ -1091,7 +1059,7 @@ cv.addEventListener("webglcontextlost", e => { e.preventDefault(); glLost = true
 cv.addEventListener("webglcontextrestored", () => { initGL(); glLost = false; });
 let glOK = !!gl;
 if (glOK) { try { initGL(); } catch (err) { console.error(err); glOK = false; } }
-if (!glOK) { document.getElementById("nogl").hidden = false; document.getElementById("start").remove(); }
+if (!glOK) { document.getElementById("nogl").hidden = false; }
 else {
   resize();
   // start somewhere with an open view ahead (a lake or low valley toward the sun)

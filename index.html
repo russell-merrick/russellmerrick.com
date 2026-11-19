@@ -69,35 +69,15 @@ body.nogl{background:radial-gradient(ellipse 70% 45% at 50% 38%,rgba(255,138,61,
 @keyframes rip{from{transform:scale(.25);opacity:1}to{transform:scale(13);opacity:0}}
 #note{position:fixed;z-index:3;left:16px;bottom:calc(var(--keysh) + 12px);font:400 10.5px/1.6 var(--mono);letter-spacing:.14em;color:var(--faint);text-transform:uppercase;pointer-events:none;text-shadow:0 1px 8px rgba(0,0,0,.7)}
 
-/* ---------- start card: glass over the live scene ---------- */
-#start{position:fixed;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(ellipse 80% 70% at 50% 50%,rgba(7,8,13,0) 0%,rgba(7,8,13,.35) 55%,rgba(7,8,13,.82) 100%);transition:opacity .8s ease,filter .8s ease,transform .8s cubic-bezier(.2,.7,.2,1)}
-#start.leaving{opacity:0;filter:blur(10px);transform:scale(1.06);pointer-events:none}
-#start .card{position:relative;max-width:520px;width:100%;text-align:center;padding:34px 30px 26px;border-radius:28px;background:linear-gradient(180deg,rgba(18,20,30,.42),rgba(10,11,18,.58));-webkit-backdrop-filter:blur(18px) saturate(150%);backdrop-filter:blur(18px) saturate(150%);border:1px solid var(--border);box-shadow:0 30px 80px -30px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.06);animation:rise .9s cubic-bezier(.2,.7,.2,1) both}
-#start .card::before{content:"";position:absolute;inset:-1px;border-radius:inherit;padding:1px;background:linear-gradient(140deg,rgba(255,210,150,.45),rgba(255,255,255,.04) 35%,rgba(255,255,255,0) 60%,rgba(176,124,255,.35));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
-#start .kicker{font:400 10.5px var(--mono);letter-spacing:.28em;text-transform:uppercase;color:var(--faint);margin:0 0 14px}
-#start .kicker span{color:var(--gold)}
-#start h1{margin:0 0 10px;font-weight:500;font-size:clamp(44px,10vw,84px);line-height:.95;letter-spacing:-.035em;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 28px rgba(255,140,70,.28))}
-#start .tag{margin:0 auto 14px;max-width:30ch;font:500 17px/1.45 var(--sans);color:rgba(243,238,230,.86)}
-#start .howto{margin:0 auto 22px;max-width:40ch;font:400 11px/1.75 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
-#go{position:relative;overflow:hidden;appearance:none;border:0;border-radius:999px;background:var(--grad);color:#1a1006;font:500 17px var(--sans);letter-spacing:.01em;padding:16px 38px;cursor:pointer;box-shadow:0 10px 40px -10px rgba(255,120,60,.7),0 0 0 1px rgba(255,255,255,.15) inset;transition:transform .2s cubic-bezier(.2,.7,.2,1),box-shadow .2s}
-#go:hover,#go:focus-visible{transform:translateY(-1px) scale(1.03);box-shadow:0 14px 50px -10px rgba(255,120,60,.9),0 0 0 1px rgba(255,255,255,.25) inset;outline:none}
-#go::after{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.55),transparent);transform:skewX(-20deg);animation:shine 3.6s ease-in-out infinite}
-#msg{min-height:1em;margin:12px 0 0;font:400 12px var(--mono);letter-spacing:.04em;color:var(--dim)}
-#start .links{margin-top:14px;display:flex;flex-direction:column;gap:10px;align-items:center;font:400 10.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
-#start .links a{color:var(--dim);text-decoration:none;border-bottom:1px solid rgba(255,255,255,.14);padding-bottom:1px;transition:color .2s,border-color .2s}
-#start .links a:hover{color:var(--gold);border-color:var(--accent)}
 [hidden]{display:none!important}
-@keyframes rise{from{opacity:0;transform:translateY(18px) scale(.98)}to{opacity:1;transform:none}}
-@keyframes shine{0%,55%{left:-60%}85%,100%{left:130%}}
 @keyframes breathe{0%,100%{opacity:.55;transform:scale(.85)}50%{opacity:1;transform:scale(1.1)}}
-@media (prefers-reduced-motion:reduce){#go::after,#hud .dot{animation:none}#start .card{animation:none}.ripple{animation-duration:.4s}}
+@media (prefers-reduced-motion:reduce){#hud .dot{animation:none}.ripple{animation-duration:.4s}}
 
 /* ---------- small screens (mirrors the live site's breakpoints) ---------- */
 @media (min-width:521px){#hud .short{display:none}}
 @media (max-width:520px){#readout,#hud .long{display:none}#loopvol{width:52px}#note{font-size:9px}}
 @media (max-width:560px){#hud .right{flex-wrap:wrap;justify-content:flex-end;row-gap:8px;width:100%}.exps{width:100%}.exps a{flex:1;text-align:center;padding:4px 0;letter-spacing:.03em}}
 @media (min-width:561px) and (max-width:1000px){#hud .brand{display:none}.exps a{padding:3px 7px;letter-spacing:.08em}}
-@media (max-height:460px){#start{padding:12px;overflow-y:auto}#start .card{max-width:660px;padding:16px 26px 14px;margin:auto}#start .kicker{margin-bottom:6px}#start h1{font-size:40px;margin-bottom:6px}#start .tag{max-width:46ch;font-size:14px;margin-bottom:6px}#start .howto{max-width:72ch;font-size:10px;line-height:1.6;margin-bottom:10px}#go{padding:11px 30px;font-size:15px}#msg{margin-top:6px}#start .links{margin-top:6px;flex-direction:row;flex-wrap:wrap;justify-content:center;gap:4px 14px}}
 </style>
 </head>
 <body>
@@ -119,29 +99,8 @@ body.nogl{background:radial-gradient(ellipse 70% 45% at 50% 38%,rgba(255,138,61,
   <div class="key" data-i="2" style="--kc:#ff4d8d;--kg:rgba(255,77,141,.45)"><span class="hint">D</span><span class="nm"></span></div>
   <div class="key" data-i="3" style="--kc:#8f7bff;--kg:rgba(143,123,255,.45)"><span class="hint">F</span><span class="nm"></span></div>
 </div>
-<div id="start">
-  <div class="card">
-    <p class="kicker">Russell Merrick · <span>01 / 05</span></p>
-    <h1>Tilt Bass</h1>
-    <p class="tag">Four glowing keys and a horizon that sings back. Tilt, and the note bends the whole world.</p>
-    <p class="howto">Hold your phone sideways · press the four keys · roll to bend · tip forward to open the filter and raise the sun · shake to wobble · sound on</p>
-    <button id="go">Tap to begin</button>
-    <p id="msg"></p>
-    <div class="links">
-      <a href="https://russellmerrick.com/about/">Skip to site →</a>
-      <span>or wander to the <a href="garden/">sand garden</a> · <a href="dream/">dream</a> · <a href="nebula/">nebula</a></span>
-    </div>
-  </div>
-</div>
 <script>
 "use strict";
-// fade the start card away (instead of removing it instantly)
-function leaveStart() {
-  const s = document.getElementById("start"); if (!s) return;
-  s.classList.add("leaving");
-  setTimeout(() => s.remove(), 850);
-}
-
 // =====================================================================================
 // AUDIO + INPUT: kept from the live Tilt Bass (same synth, same mappings)
 // =====================================================================================
@@ -894,28 +853,36 @@ function frame(now) {
   }
 }
 
-// ---------- start: one tap unlocks audio + asks for motion ----------
-document.getElementById("go").addEventListener("click", () => {
+// ---------- first gesture unlocks audio + asks for motion (iOS) ----------
+let unlocked = false, motionListening = false;
+function listenMotion() {
+  if (motionListening) return; motionListening = true;
+  addEventListener("deviceorientation", onOrient); addEventListener("devicemotion", onMotion);
+}
+function unlock() {
+  if (unlocked) return; unlocked = true;
   // 1) iOS: route Web Audio to the media channel so the ringer switch doesn't mute it (Safari 16.4+/iOS 17)
   try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch (_) {}
-  // 2) create + resume the context synchronously inside the gesture
-  if (!ctx) { buildGraph(); startLoop(); } ctx.resume();
-  // 3) ask for motion permission in the SAME gesture, before any await (iOS 13+)
-  const msg = document.getElementById("msg");
-  const listen = () => { addEventListener("deviceorientation", onOrient); addEventListener("devicemotion", onMotion); };
+  // 2) create + resume the context synchronously inside the gesture, before any await
+  if (!ctx) { buildGraph(); startLoop(); } if (ctx) ctx.resume();
+  // 3) ask for motion permission in the SAME gesture (iOS 13+)
   const DOE = window.DeviceOrientationEvent, DME = window.DeviceMotionEvent;
   const done = () => {
-    leaveStart(); started = true;
+    started = true;
     if (ghost.key >= 0) { fxNoteOff(ghost.key); ghost.key = -1; }
-    addRing([1, 0.8, 0.5], 1.4); for (let i = 0; i < 4; i++) setTimeout(() => { addWave(keyX[i], stringY, KEY_RGB[i], 0.6); pluck[i] = 0.7; }, 90 * i);
     setTimeout(() => { if (!haveSensor) document.getElementById("note").textContent = "NO MOTION SENSOR · MOUSE = TILT · KEYS A S D F · SPACE = WOBBLE"; }, 800);
   };
   if (DOE && typeof DOE.requestPermission === "function") {
     const pO = DOE.requestPermission(), pM = (DME && typeof DME.requestPermission === "function") ? DME.requestPermission() : Promise.resolve("granted");
-    Promise.all([pO, pM]).then(([o, m]) => { if (o === "granted") listen(); else msg.textContent = "Motion off. Keys still play."; if (m === "granted") addEventListener("devicemotion", onMotion); done(); })
-      .catch(() => { msg.textContent = "Motion unavailable. Keys still play."; done(); });
-  } else { listen(); done(); }
-});
+    Promise.all([pO, pM]).then(([o, m]) => { if (o === "granted") addEventListener("deviceorientation", onOrient); if (m === "granted") addEventListener("devicemotion", onMotion); if (o === "granted" || m === "granted") motionListening = true; done(); })
+      .catch(() => { done(); });
+  } else { listenMotion(); done(); }
+}
+addEventListener("pointerdown", unlock, true);
+addEventListener("touchstart", unlock, true);
+addEventListener("keydown", e => { if (!e.repeat) unlock(); }, true);
+// non-iOS: tilt works as soon as the sensor reports, no tap needed
+if (!(window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === "function")) listenMotion();
 document.addEventListener("visibilitychange", () => { if (!ctx) return; if (document.hidden) ctx.suspend(); else ctx.resume(); });
 
 // ---------- boot ----------
